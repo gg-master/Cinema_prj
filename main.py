@@ -73,19 +73,22 @@ class MainWindow(MyQWidget, card_widget.Ui_Form):
         self.setMinimumHeight(wdh)
 
         self.layout = QGridLayout(self)
-        self.load_films()
 
-        self.sort_btn.clicked.connect(self.filter_r)
+        self.sort_btn.clicked.connect(self.filter_wind_open)
         self.search_btn.clicked.connect(self.load_films)
         self.admin_btn.clicked.connect(self.admin_sign_in)
 
-    def load_films(self, s=None, filters=False):
+        self.filter_load()
+        self.load_films()
+
+    def load_films(self):
         """
         открываем базу, узнаем название, постер(картинка), жанр, год,
         и рейтинг
         также добавляем кнопку для перехода к более подробному описанию
         """
         search_text = self.search.text() + '%'
+        s = self.create_request_for_filter()
 
         # Очищение экрана от старых результатов поиска
         while self.layout.count():
@@ -94,17 +97,10 @@ class MainWindow(MyQWidget, card_widget.Ui_Form):
                 child.widget().deleteLater()
 
         cur = self.conn.cursor()
-        # Получение разныех запросов при запущенной сортировке и без нее
-        if filters:
-            request = f'''SELECT id, title, rating, genre, 
-                                year, images from films
-                                where title like "{search_text}" {s}'''
-            rez = cur.execute(request).fetchall()
-        else:
-            rez = cur.execute("""SELECT id, title, rating, genre, 
-                                year, images from films
-                                where title like ?""",
-                              (search_text,)).fetchall()
+        request = f'''SELECT id, title, rating, genre, 
+                                        year, images from films
+                                        where title like "{search_text}" {s}'''
+        rez = cur.execute(request).fetchall()
 
         if len(rez) == 0:
             self.statusBar.setText('Фильмы не найдены')
@@ -143,14 +139,16 @@ class MainWindow(MyQWidget, card_widget.Ui_Form):
         self.filt = CardOfFilm(self.conn, self.sender().id)
         self.filt.show()
 
-    def filter_r(self):
+    def filter_wind_open(self):
+        self.filt.show()
+        self.filt.exec_()
+        self.load_films()
+
+    def filter_load(self):
         """
         Открытие окна фильтровки поиска и обновление
         главного окна в соответствии с установленными фильтрами
         """
-        # TODO Думаю нужно реализовать "запоминание"
-        #  установленных раньше параметров для фильтра
-
         cur = self.conn.cursor()
         rez = cur.execute("""SELECT DISTINCT year, genre, rating, producer 
         from films""").fetchall()
@@ -164,11 +162,12 @@ class MainWindow(MyQWidget, card_widget.Ui_Form):
                 name = name.strip('\n')
                 producer.append(name)
 
-        filt = FilterDialog(years, genre, rating, producer)
-        filt.show()
-        filt.exec_()
+        self.filt = FilterDialog()
+        self.filt.reload_ui(years, genre, rating, producer)
+
+    def create_request_for_filter(self):
         try:
-            dct = filt.get_items()
+            dct = self.filt.get_items()
             s = ''
             if dct['year'][0]:
                 s += f' and year like "{dct["year"][1]}"'
@@ -180,7 +179,7 @@ class MainWindow(MyQWidget, card_widget.Ui_Form):
                 if not dct['producer'][1]:
                     dct['producer'][1] = 'NONE'
                 s += f' and producer like "{dct["producer"][1]}"'
-            self.load_films(s, filters=True)
+            return s
         except Exception as ex:
             print(ex)
 
@@ -515,31 +514,44 @@ class TrailerWidget(MyQWidget):
 
 
 class FilterDialog(QDialog):
-    def __init__(self, y, g, r, p):
+    def __init__(self):
         QDialog.__init__(self)
-        window_arr.append(self)
+        # window_arr.append(self)
         uic.loadUi(path_for_gui + 'filter.ui', self)
         self.setWindowTitle('Настройки сортировки')
         self.buttonBox.accepted.connect(self.acept_data)
         self.buttonBox.rejected.connect(self.reject_data)
-        self.comboBox.addItems(y)
-        self.comboBox_2.addItems(g)
-        self.comboBox_3.addItems(r)
-        self.comboBox_4.addItems(p)
         self.a = {'year': [False, ''],
                   'genre': [False, ''],
                   'rating': [False, ''],
                   'producer': [False, '']}
 
+    def reload_ui(self, y, g, r, p):
+        self.comboBox.addItems(y)
+        self.comboBox_2.addItems(g)
+        self.comboBox_3.addItems(r)
+        self.comboBox_4.addItems(p)
+
     def acept_data(self):
         if self.checkBox.isChecked():
             self.a['year'] = [True, self.comboBox.currentText()]
+        else:
+            self.a['year'] = [False, '']
+
         if self.checkBox_2.isChecked():
             self.a['genre'] = [True, self.comboBox_2.currentText()]
+        else:
+            self.a['genre'] = [False, '']
+
         if self.checkBox_3.isChecked():
             self.a['rating'] = [True, self.comboBox_3.currentText()]
+        else:
+            self.a['rating'] = [False, '']
+
         if self.checkBox_4.isChecked():
             self.a['producer'] = [True, self.comboBox_4.currentText()]
+        else:
+            self.a['producer'] = [False, '']
         # print(self.a)
         self.close()
 
