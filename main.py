@@ -37,12 +37,28 @@ class MyQWidget(QWidget):
     def __init__(self, *args):
         super().__init__(*args)
 
+    '''Использованы две реализации закрытия форм:
+        1) Когда при закрытии родительского окна закрыватся все дочернии окна
+        Реализовано через добавление всех форм в список window_arr
+        2) Когда при открытом дочернем окне не возможно будет закрыть 
+        родительское окно
+        Реализовано также через window_arr
+        
+        См закомментированный и не закоментированный методы ниже
+    '''
     # def closeEvent(self, a0: QCloseEvent):
     #     i = window_arr[-1]
     #     while i != self:
     #         i.close()
     #         del window_arr[-1]
     #         i = window_arr[-1]
+
+    def closeEvent(self, a0: QCloseEvent):
+        if window_arr[-1] != self:
+            a0.ignore()
+        else:
+            window_arr[-1].close()
+            del window_arr[-1]
 
 
 class MainWindow(MyQWidget, card_widget.Ui_Form):
