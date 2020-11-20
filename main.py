@@ -73,7 +73,6 @@ class MainWindow(MyQWidget, card_widget.Ui_Form):
         self.setMinimumHeight(wdh)
 
         self.layout = QGridLayout(self)
-
         self.load_films()
 
         self.sort_btn.clicked.connect(self.filter_r)
@@ -95,6 +94,7 @@ class MainWindow(MyQWidget, card_widget.Ui_Form):
                 child.widget().deleteLater()
 
         cur = self.conn.cursor()
+        # Получение разныех запросов при запущенной сортировке и без нее
         if filters:
             request = f'''SELECT id, title, rating, genre, 
                                 year, images from films
@@ -105,11 +105,14 @@ class MainWindow(MyQWidget, card_widget.Ui_Form):
                                 year, images from films
                                 where title like ?""",
                               (search_text,)).fetchall()
-        # print(rez)
+
         if len(rez) == 0:
             self.statusBar.setText('Фильмы не найдены')
         else:
             self.statusBar.setText('')
+
+        # Заполнение layout виджетами
+        # Необходимо для корректной работы QScrollArea
         for i in range(0, len(rez) + col_in_mainWindow, col_in_mainWindow):
             for j in range(col_in_mainWindow):
                 if i + j >= len(rez):
@@ -137,12 +140,17 @@ class MainWindow(MyQWidget, card_widget.Ui_Form):
         return w
 
     def open_card(self):
-        id = self.sender().id
-        # print(id)
-        self.filt = CardOfFilm(self.conn, id)
+        self.filt = CardOfFilm(self.conn, self.sender().id)
         self.filt.show()
 
     def filter_r(self):
+        """
+        Открытие окна фильтровки поиска и обновление
+        главного окна в соответствии с установленными фильтрами
+        """
+        # TODO Думаю нужно реализовать "запоминание"
+        #  установленных раньше параметров для фильтра
+
         cur = self.conn.cursor()
         rez = cur.execute("""SELECT DISTINCT year, genre, rating, producer 
         from films""").fetchall()
@@ -315,7 +323,6 @@ class BuyTct(MyQWidget):
         self.id_films_in_c = rez_f[-1]
 
     def load_time(self):
-
         cur = self.conn.cursor()
         name_c = self.cinemas.currentText()
 
@@ -345,7 +352,6 @@ class BuyTct(MyQWidget):
             id, name = i[:2]
             self.dct_cinema[id] = name
         rez = list(self.dct_cinema.values())
-
         self.cinemas.addItems(rez)
 
     def close_act(self):
@@ -357,7 +363,8 @@ class BuyTct(MyQWidget):
         s = f'{", ".join(self.places)}'
         req = f'{s}'
         cur.execute(f'''UPDATE timetable 
-                        set places = ? WHERE id = ?''', (req, self.id_films_in_c))
+                        set places = ? 
+                        WHERE id = ?''', (req, self.id_films_in_c))
         self.conn.commit()
         self.ticket = Ticket()
         self.ticket.show()
@@ -380,6 +387,12 @@ class ChooseSeat(QDialog):
         self.setupUi(self)
 
     def setupUi(self, Dialog):
+        """Происходит загрузка интерфейса посредством циклического
+        заполнения кнопок в зависимости от количества месте в базе
+        планировалось 3-5-7-9-11 и тд количество мест
+
+        Реализовал черзе преобразование pyuic так как сначала прикинул нужный
+        мне дизайн и потом отформатировал под свои задачи"""
         Dialog.resize(599, 215)
         self.gridLayout = QtWidgets.QGridLayout(Dialog)
         self.verticalLayout = QtWidgets.QVBoxLayout()
@@ -410,15 +423,14 @@ class ChooseSeat(QDialog):
             if i >= k:
                 k += 2 + i
                 spacerItem = QtWidgets.QSpacerItem(40, 20,
-                                                   QtWidgets.QSizePolicy.Expanding,
-                                                   QtWidgets.QSizePolicy.Minimum)
+                                                   QtWidgets.QSizePolicy.
+                                                   Expanding,
+                                                   QtWidgets.QSizePolicy.
+                                                   Minimum)
                 horizontalLayout.addItem(spacerItem)
                 self.verticalLayout_3.addLayout(horizontalLayout)
 
                 horizontalLayout = QtWidgets.QHBoxLayout()
-                spacerItem = QtWidgets.QSpacerItem(40, 20,
-                                                   QtWidgets.QSizePolicy.Expanding,
-                                                   QtWidgets.QSizePolicy.Minimum)
                 horizontalLayout.addItem(spacerItem)
 
             pushButton = QtWidgets.QPushButton(str(i), Dialog)
@@ -450,14 +462,13 @@ class ChooseSeat(QDialog):
         self.verticalLayout.addLayout(self.verticalLayout_3)
         self.gridLayout.addLayout(self.verticalLayout, 0, 0, 1, 1)
         self.gridLayout.addWidget(self.buttonBox, 1, 0, 1, 1)
-        # self.retranslateUi(Dialog)
         self.buttonBox.accepted.connect(Dialog.accept)
         self.buttonBox.rejected.connect(Dialog.reject)
-
         self.bG.buttonClicked.connect(self.changeBt)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def changeBt(self, btn):
+        """Изменение цвета кнопки при нажатии на нее"""
         if self.isChoose:
             self.btn.setStyleSheet(
                 "background-color: none;")
@@ -484,7 +495,6 @@ class TrailerWidget(MyQWidget):
         self.url = url
         self.setWindowTitle(title)
 
-        # self.player = QMediaPlayer()
         self.player = QMediaPlayer(None, QMediaPlayer.VideoSurface)
         self.player.setMedia(QMediaContent(QUrl.
                                            fromLocalFile(url)))
