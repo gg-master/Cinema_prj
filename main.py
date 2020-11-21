@@ -61,6 +61,35 @@ class MyQWidget(QWidget):
             del window_arr[-1]
 
 
+class MyQDialog(QDialog):
+    def __init__(self, *args):
+        super().__init__(*args)
+
+    '''Использованы две реализации закрытия форм:
+        1) Когда при закрытии родительского окна закрыватся все дочернии окна
+        Реализовано через добавление всех форм в список window_arr
+        2) Когда при открытом дочернем окне не возможно будет закрыть 
+        родительское окно
+        Реализовано также через window_arr
+
+        См закомментированный и не закоментированный методы ниже
+    '''
+
+    # def closeEvent(self, a0: QCloseEvent):
+    #     i = window_arr[-1]
+    #     while i != self:
+    #         i.close()
+    #         del window_arr[-1]
+    #         i = window_arr[-1]
+
+    def closeEvent(self, a0: QCloseEvent):
+        if window_arr[-1] != self:
+            a0.ignore()
+        else:
+            window_arr[-1].close()
+            del window_arr[-1]
+
+
 class MainWindow(MyQWidget, card_widget.Ui_Form):
     def __init__(self):
         super().__init__()
@@ -291,15 +320,16 @@ class BuyTct(MyQWidget):
         self.load_cinemas()
 
     def choose_seat(self):
-        try:
-            cs = ChooseSeat(self.places)
+        # try:
+            cs = ChooseSeat(self.places, self)
             cs.show()
             cs.exec_()
-            self.numb = cs.get_btn_numb()
-            self.place.setText(f"№ {self.numb + 1}")
-            self.accept.setEnabled(True)
-        except Exception:
-            self.statusBar.setText('Выберите кинотеатр и время')
+            # self.numb = self.cs.get_btn_numb()
+            # print(self.numb)
+            # self.place.setText(f"№ {self.numb + 1}")
+            # self.accept.setEnabled(True)
+        # except Exception:
+        #     self.statusBar.setText('Выберите кинотеатр и время')
 
     def load_other(self):
         cur = self.conn.cursor()
@@ -367,7 +397,7 @@ class BuyTct(MyQWidget):
         self.conn.commit()
         self.ticket = Ticket()
         self.ticket.show()
-        self.close()
+        # self.close()
 
 
 class Ticket(QWidget):
@@ -376,48 +406,51 @@ class Ticket(QWidget):
         uic.loadUi(path_for_gui + 'successful_purchase.ui', self)
 
 
-class ChooseSeat(QDialog):
-    def __init__(self, places):
-        QDialog.__init__(self)
+class ChooseSeat(MyQDialog):
+    def __init__(self, places, parent=None):
+        # QDialog.__init__(self)
+        super().__init__()
         window_arr.append(self)
         self.places = places
         self.isChoose = False
         self.btn = None
-        self.setupUi(self)
+        self.setupUi()
 
-    def setupUi(self, Dialog):
+    def setupUi(self):
         """Происходит загрузка интерфейса посредством циклического
         заполнения кнопок в зависимости от количества месте в базе
         планировалось 3-5-7-9-11 и тд количество мест
 
         Реализовал черзе преобразование pyuic так как сначала прикинул нужный
         мне дизайн и потом отформатировал под свои задачи"""
-        Dialog.resize(599, 215)
-        self.gridLayout = QtWidgets.QGridLayout(Dialog)
-        self.verticalLayout = QtWidgets.QVBoxLayout()
-        self.label = QtWidgets.QLabel(Dialog)
+        self.resize(599, 215)
+        # self.setGeometry(300, 300, 300, 300)
+        gridLayout = QtWidgets.QGridLayout(self)
+        verticalLayout = QtWidgets.QVBoxLayout()
+        label = QtWidgets.QLabel(self)
         font = QtGui.QFont()
         font.setPointSize(10)
         font.setBold(True)
         font.setWeight(75)
-        self.label.setFont(font)
-        self.label.setStyleSheet("background-color: rgb(152, 152, 152);")
-        self.label.setAlignment(QtCore.Qt.AlignCenter)
-        self.label.setText('Экран')
-        self.verticalLayout.addWidget(self.label)
+        label.setFont(font)
+        label.setStyleSheet("background-color: rgb(152, 152, 152);")
+        label.setAlignment(QtCore.Qt.AlignCenter)
+        label.setText('Экран')
+        verticalLayout.addWidget(label)
         spacerItem = QtWidgets.QSpacerItem(20, 40,
                                            QtWidgets.QSizePolicy.Minimum,
                                            QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout.addItem(spacerItem)
-        self.verticalLayout_3 = QtWidgets.QVBoxLayout()
+        verticalLayout.addItem(spacerItem)
+        verticalLayout_3 = QtWidgets.QVBoxLayout()
 
-        self.bG = QButtonGroup(self)
+        self.bG = QButtonGroup()
         k = 3
         horizontalLayout = QtWidgets.QHBoxLayout()
         spacerItem = QtWidgets.QSpacerItem(40, 20,
                                            QtWidgets.QSizePolicy.Expanding,
                                            QtWidgets.QSizePolicy.Minimum)
         horizontalLayout.addItem(spacerItem)
+
         for i in range(1, len(self.places) + 1):
             if i >= k:
                 k += 2 + i
@@ -427,12 +460,17 @@ class ChooseSeat(QDialog):
                                                    QtWidgets.QSizePolicy.
                                                    Minimum)
                 horizontalLayout.addItem(spacerItem)
-                self.verticalLayout_3.addLayout(horizontalLayout)
+                verticalLayout_3.addLayout(horizontalLayout)
 
+                spacerItem = QtWidgets.QSpacerItem(40, 20,
+                                                   QtWidgets.QSizePolicy.
+                                                   Expanding,
+                                                   QtWidgets.QSizePolicy.
+                                                   Minimum)
                 horizontalLayout = QtWidgets.QHBoxLayout()
                 horizontalLayout.addItem(spacerItem)
 
-            pushButton = QtWidgets.QPushButton(str(i), Dialog)
+            pushButton = QtWidgets.QPushButton(str(i), self)
             sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum,
                                                QtWidgets.QSizePolicy.Fixed)
             sizePolicy.setHorizontalStretch(0)
@@ -451,20 +489,21 @@ class ChooseSeat(QDialog):
                                            QtWidgets.QSizePolicy.Expanding,
                                            QtWidgets.QSizePolicy.Minimum)
         horizontalLayout.addItem(spacerItem)
-        self.verticalLayout_3.addLayout(horizontalLayout)
-
-        self.buttonBox = QtWidgets.QDialogButtonBox(Dialog)
-        self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(
-            QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
-
-        self.verticalLayout.addLayout(self.verticalLayout_3)
-        self.gridLayout.addLayout(self.verticalLayout, 0, 0, 1, 1)
-        self.gridLayout.addWidget(self.buttonBox, 1, 0, 1, 1)
-        self.buttonBox.accepted.connect(Dialog.accept)
-        self.buttonBox.rejected.connect(Dialog.reject)
-        self.bG.buttonClicked.connect(self.changeBt)
-        QtCore.QMetaObject.connectSlotsByName(Dialog)
+        verticalLayout_3.addLayout(horizontalLayout)
+        #
+        # self.buttonBox = QtWidgets.QDialogButtonBox(self)
+        # self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
+        # self.buttonBox.setStandardButtons(
+        #     QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
+        #
+        verticalLayout.addLayout(verticalLayout_3)
+        gridLayout.addLayout(verticalLayout, 0, 0, 1, 1)
+        # gridLayout.addWidget(self.buttonBox, 1, 0, 1, 1)
+        #
+        # # self.buttonBox.accepted.connect(self.accept)
+        # # self.buttonBox.rejected.connect(self.reject)
+        # self.bG.buttonClicked.connect(self.changeBt)
+        # QtCore.QMetaObject.connectSlotsByName(self)
 
     def changeBt(self, btn):
         """Изменение цвета кнопки при нажатии на нее"""
@@ -476,14 +515,18 @@ class ChooseSeat(QDialog):
         self.btn = btn
         self.isChoose = True
 
-    def accepted(self):
-        self.close()
+    def accepte(self):
+        # super().close()
+        pass
 
-    def rejected(self):
-        self.close()
+    def rejecte(self):
+        # self.close()
+        pass
 
     def get_btn_numb(self):
-        return int(self.btn.text()) - 1
+        if self.btn is not None:
+            return int(self.btn.text()) - 1
+        return 'None'
 
 
 class TrailerWidget(MyQWidget):
