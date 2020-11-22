@@ -315,32 +315,100 @@ class BuyTct(MyQWidget):
         uic.loadUi(path_for_gui + 'buy_tck.ui', self)
         self.conn = sqlite3.connect(path_for_db + "sinema_db.db")
         self.cancel.clicked.connect(self.close_act)
+        self.accept.clicked.connect(self.accept_action)
+
         self.cinemas.activated.connect(self.load_time)
         self.times.activated.connect(self.load_other)
+
         self.choose_place_btn.clicked.connect(self.choose_seat)
-        self.accept.clicked.connect(self.accept_action)
+
         self.film_id = id
         self.film_title = title
 
         self.load_cinemas()
 
     def choose_seat(self):
-        # try:
+        try:
             cs = ChooseSeat(self.places, self)
             if self.accept.isEnabled() and self.numb is not None:
-                cs.set_selected_place(self.numb, isSelected=True)
+                cs.set_selected_btn(self.numb, isSelected=True)
             cs.show()
             cs.exec_()
             self.numb = cs.get_btn_numb()
+            self.create_new_seat()
             if self.numb is not None:
-                self.place.setText(f"№ {self.numb + 1}")
                 self.accept.setEnabled(True)
+                self.statusBar.setText('')
+                self.it_price.setText(f'{int(self.price.text().split()[0]) * len(self.numb)}')
             else:
                 self.statusBar.setText('Место не выбрано')
-                self.place.setText("Не выбрано")
                 self.accept.setEnabled(False)
-        # except Exception:
-        #     self.statusBar.setText('Выберите кинотеатр и время')
+        except Exception:
+            self.statusBar.setText('Выберите кинотеатр и время')
+
+    def create_new_seat(self):
+        if self.scrollArea_2:
+            self.scrollArea_2.deleteLater()
+        self.scrollArea_2 = QtWidgets.QScrollArea(self.groupBox_2)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred,
+                                           QtWidgets.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(
+            self.scrollArea_2.sizePolicy().hasHeightForWidth())
+        self.scrollArea_2.setSizePolicy(sizePolicy)
+        self.scrollArea_2.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.scrollArea_2.setLineWidth(1)
+        self.scrollArea_2.setWidgetResizable(True)
+        self.scrollAreaWidgetContents_3 = QtWidgets.QWidget()
+        self.scrollAreaWidgetContents_3.setGeometry(
+            QtCore.QRect(0, 0, 260, 60))
+        self.scrollAreaWidgetContents_3.setObjectName(
+            "scrollAreaWidgetContents_3")
+        self.verticalLayout_7 = QtWidgets.QVBoxLayout(
+            self.scrollAreaWidgetContents_3)
+
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        if self.numb is not None:
+            for num in range(len(self.numb)):
+                horizontalLayout = QtWidgets.QHBoxLayout()
+                place_text = QtWidgets.QLabel(f'Место ({num + 1}):',
+                                              self.scrollAreaWidgetContents_3)
+                number = QtWidgets.QLabel(f'№ {self.numb[num] + 1}',
+                                          self.scrollAreaWidgetContents_3)
+
+                spacerItem = QtWidgets.QSpacerItem(40, 20,
+                                                   QtWidgets.QSizePolicy.
+                                                   Expanding,
+                                                   QtWidgets.QSizePolicy.
+                                                   Minimum)
+                place_text.setFont(font)
+                number.setFont(font)
+
+                horizontalLayout.addWidget(place_text)
+                horizontalLayout.addWidget(number)
+                horizontalLayout.addItem(spacerItem)
+                self.verticalLayout_7.addLayout(horizontalLayout)
+        else:
+            horizontalLayout = QtWidgets.QHBoxLayout()
+            place_text = QtWidgets.QLabel('Место:',
+                                          self.scrollAreaWidgetContents_3)
+            number = QtWidgets.QLabel("Место не выбрано",
+                                      self.scrollAreaWidgetContents_3)
+            spacerItem = QtWidgets.QSpacerItem(40, 20,
+                                               QtWidgets.QSizePolicy.Expanding,
+                                               QtWidgets.QSizePolicy.Minimum)
+            place_text.setFont(font)
+            number.setFont(font)
+
+            horizontalLayout.addWidget(place_text)
+            horizontalLayout.addWidget(number)
+            horizontalLayout.addItem(spacerItem)
+            self.verticalLayout_7.addLayout(horizontalLayout)
+
+        self.scrollArea_2.setWidget(self.scrollAreaWidgetContents_3)
+        self.verticalLayout_6.addWidget(self.scrollArea_2)
 
     def load_other(self):
         cur = self.conn.cursor()
@@ -417,27 +485,47 @@ class Ticket(QWidget):
         uic.loadUi(path_for_gui + 'successful_purchase.ui', self)
 
 
+class MyPushButton(QPushButton):
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.isSelected = False
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.setStyleSheet(
+                "background-color: rgb(255, 227, 156);")
+            self.isSelected = True
+        elif event.button() == Qt.RightButton:
+            self.setStyleSheet(
+                "background-color: none;")
+            self.isSelected = False
+        return QPushButton.mousePressEvent(self, event)
+
+
 class ChooseSeat(MyQDialog):
     def __init__(self, places, parent=None):
-        # QDialog.__init__(self)
         super().__init__()
         window_arr.append(self)
         self.places = places
-        self.def_places = places
-        self.isChoose = False
+
         self.isSelected = False
-        self.btn = None
-        self.last_btn = None
+        self.numb_of_choose_btn = []
+        self.last_num_of_choose_btn = self.numb_of_choose_btn
+
         self.setupUi()
+        self.buttonBox.accepted.connect(self.c_action)
+        self.buttonBox.rejected.connect(self.set_default_places)
 
     def setupUi(self):
         """Происходит загрузка интерфейса посредством циклического
         заполнения кнопок в зависимости от количества месте в базе
         планировалось 3-5-7-9-11 и тд количество мест
 
-        Реализовал черзе преобразование pyuic так как сначала прикинул нужный
+        Реализовал через преобразование pyuic так как сначала прикинул нужный
         мне дизайн и потом отформатировал под свои задачи"""
         self.resize(599, 215)
+        self.setWindowTitle('Выбор места')
         # self.setGeometry(300, 300, 300, 300)
         gridLayout = QtWidgets.QGridLayout(self)
         verticalLayout = QtWidgets.QVBoxLayout()
@@ -484,7 +572,7 @@ class ChooseSeat(MyQDialog):
                 horizontalLayout = QtWidgets.QHBoxLayout()
                 horizontalLayout.addItem(spacerItem)
 
-            pushButton = QtWidgets.QPushButton(str(i), self)
+            pushButton = MyPushButton(str(i), self)
             sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum,
                                                QtWidgets.QSizePolicy.Fixed)
             sizePolicy.setHorizontalStretch(0)
@@ -514,42 +602,35 @@ class ChooseSeat(MyQDialog):
         gridLayout.addLayout(verticalLayout, 0, 0, 1, 1)
         gridLayout.addWidget(self.buttonBox, 1, 0, 1, 1)
 
-        self.buttonBox.accepted.connect(self.close)
-        self.buttonBox.rejected.connect(self.set_default_places)
-        self.bG.buttonClicked.connect(self.changeBt)
         QtCore.QMetaObject.connectSlotsByName(self)
 
-    def set_selected_place(self, place, isSelected):
+    def set_selected_btn(self, num_of_choose_btn, isSelected):
         self.isSelected = isSelected
         btn_arr = self.bG.buttons()
-        btn = btn_arr[place]
-        btn.setStyleSheet(
-            "background-color: rgb(255, 227, 156);")
-        self.btn = btn
-        self.last_btn = btn
-        self.isChoose = True
+        btns = []
+        for num in num_of_choose_btn:
+            btn = btn_arr[num]
+            btn.isSelected = True
+            btn.setStyleSheet(
+                "background-color: rgb(255, 227, 156);")
+            btns.append(num)
+        self.last_num_of_choose_btn = btns
 
-    def set_default_places(self):
-        if not self.isSelected:
-            self.places = self.def_places
-            self.btn = None
-        else:
-            self.btn = self.last_btn
+    def c_action(self):
+        buttons = self.bG.buttons()
+        for btn in buttons:
+            if btn.isSelected:
+                self.numb_of_choose_btn.append(int(btn.text()) - 1)
         self.close()
 
-    def changeBt(self, btn):
-        """Изменение цвета кнопки при нажатии на нее"""
-        if self.isChoose:
-            self.btn.setStyleSheet(
-                "background-color: none;")
-        btn.setStyleSheet(
-            "background-color: rgb(255, 227, 156);")
-        self.btn = btn
-        self.isChoose = True
+    def set_default_places(self):
+        if self.isSelected:
+            self.numb_of_choose_btn = self.last_num_of_choose_btn
+        self.close()
 
     def get_btn_numb(self):
-        if self.btn is not None:
-            return int(self.btn.text()) - 1
+        if self.numb_of_choose_btn:
+            return self.numb_of_choose_btn
 
 
 class TrailerWidget(MyQWidget):
