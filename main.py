@@ -56,6 +56,7 @@ class MyQWidget(QWidget):
     def closeEvent(self, a0: QCloseEvent):
         if window_arr[-1] != self:
             a0.ignore()
+            window_arr[-1].activateWindow()
         else:
             window_arr[-1].close()
             del window_arr[-1]
@@ -85,6 +86,7 @@ class MyQDialog(QDialog):
     def closeEvent(self, a0: QCloseEvent):
         if window_arr[-1] != self:
             a0.ignore()
+            window_arr[-1].activateWindow()
         else:
             window_arr[-1].close()
             del window_arr[-1]
@@ -165,11 +167,12 @@ class MainWindow(MyQWidget, card_widget.Ui_Form):
         return w
 
     def open_card(self):
-        self.filt = CardOfFilm(self.conn, self.sender().id)
-        self.filt.show()
+        self.card = CardOfFilm(self, self.conn, self.sender().id)
+        self.card.show()
 
     def filter_wind_open(self):
         self.filt.show()
+        window_arr.append(self.filt)
         self.filt.exec_()
         self.load_films()
 
@@ -218,10 +221,12 @@ class MainWindow(MyQWidget, card_widget.Ui_Form):
 
 
 class CardOfFilm(MyQWidget):
-    def __init__(self, db_con, id_film):
+    def __init__(self, parent, db_con, id_film):
         super().__init__()
         window_arr.append(self)
+        # self.setParent(parent)
         uic.loadUi(path_for_gui + 'card_of_film.ui', self)
+
         self.setWindowTitle('Карточка фильма')
         self.playBtn.clicked.connect(self.play_trailer)
         self.buy_ticket_btn.clicked.connect(self.buy_ticket)
@@ -574,10 +579,9 @@ class TrailerWidget(MyQWidget):
         self.close()
 
 
-class FilterDialog(QDialog):
+class FilterDialog(MyQDialog):
     def __init__(self):
         QDialog.__init__(self)
-        # window_arr.append(self)
         uic.loadUi(path_for_gui + 'filter.ui', self)
         self.setWindowTitle('Настройки сортировки')
         self.buttonBox.accepted.connect(self.acept_data)
