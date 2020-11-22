@@ -322,12 +322,18 @@ class BuyTct(MyQWidget):
     def choose_seat(self):
         # try:
             cs = ChooseSeat(self.places, self)
+            if self.accept.isEnabled() and self.numb is not None:
+                cs.set_selected_place(self.numb, isSelected=True)
             cs.show()
             cs.exec_()
-            # self.numb = self.cs.get_btn_numb()
-            # print(self.numb)
-            # self.place.setText(f"№ {self.numb + 1}")
-            # self.accept.setEnabled(True)
+            self.numb = cs.get_btn_numb()
+            if self.numb is not None:
+                self.place.setText(f"№ {self.numb + 1}")
+                self.accept.setEnabled(True)
+            else:
+                self.statusBar.setText('Место не выбрано')
+                self.place.setText("Не выбрано")
+                self.accept.setEnabled(False)
         # except Exception:
         #     self.statusBar.setText('Выберите кинотеатр и время')
 
@@ -412,8 +418,11 @@ class ChooseSeat(MyQDialog):
         super().__init__()
         window_arr.append(self)
         self.places = places
+        self.def_places = places
         self.isChoose = False
+        self.isSelected = False
         self.btn = None
+        self.last_btn = None
         self.setupUi()
 
     def setupUi(self):
@@ -491,19 +500,37 @@ class ChooseSeat(MyQDialog):
         horizontalLayout.addItem(spacerItem)
         verticalLayout_3.addLayout(horizontalLayout)
         #
-        # self.buttonBox = QtWidgets.QDialogButtonBox(self)
-        # self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        # self.buttonBox.setStandardButtons(
-        #     QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
+        self.buttonBox = QtWidgets.QDialogButtonBox(self)
+        self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
+        self.buttonBox.setStandardButtons(
+            QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
         #
         verticalLayout.addLayout(verticalLayout_3)
         gridLayout.addLayout(verticalLayout, 0, 0, 1, 1)
-        # gridLayout.addWidget(self.buttonBox, 1, 0, 1, 1)
-        #
-        # # self.buttonBox.accepted.connect(self.accept)
-        # # self.buttonBox.rejected.connect(self.reject)
-        # self.bG.buttonClicked.connect(self.changeBt)
-        # QtCore.QMetaObject.connectSlotsByName(self)
+        gridLayout.addWidget(self.buttonBox, 1, 0, 1, 1)
+
+        self.buttonBox.accepted.connect(self.close)
+        self.buttonBox.rejected.connect(self.set_default_places)
+        self.bG.buttonClicked.connect(self.changeBt)
+        QtCore.QMetaObject.connectSlotsByName(self)
+
+    def set_selected_place(self, place, isSelected):
+        self.isSelected = isSelected
+        btn_arr = self.bG.buttons()
+        btn = btn_arr[place]
+        btn.setStyleSheet(
+            "background-color: rgb(255, 227, 156);")
+        self.btn = btn
+        self.last_btn = btn
+        self.isChoose = True
+
+    def set_default_places(self):
+        if not self.isSelected:
+            self.places = self.def_places
+            self.btn = None
+        else:
+            self.btn = self.last_btn
+        self.close()
 
     def changeBt(self, btn):
         """Изменение цвета кнопки при нажатии на нее"""
@@ -511,22 +538,13 @@ class ChooseSeat(MyQDialog):
             self.btn.setStyleSheet(
                 "background-color: none;")
         btn.setStyleSheet(
-            "background-color: rgb(172, 163, 181);")
+            "background-color: rgb(255, 227, 156);")
         self.btn = btn
         self.isChoose = True
-
-    def accepte(self):
-        # super().close()
-        pass
-
-    def rejecte(self):
-        # self.close()
-        pass
 
     def get_btn_numb(self):
         if self.btn is not None:
             return int(self.btn.text()) - 1
-        return 'None'
 
 
 class TrailerWidget(MyQWidget):

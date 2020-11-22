@@ -97,7 +97,7 @@
             </sizepolicy>
            </property>
            <property name="styleSheet">
-            <string notr="true">background-color: none;</string>
+            <string notr="true">background-color: rgb(255, 227, 156);</string>
            </property>
            <property name="text">
             <string>2</string>
