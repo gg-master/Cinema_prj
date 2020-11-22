@@ -32,20 +32,24 @@ def my_exception_hook(exctype, value, traceback):
 # Set the exception hook to our wrapping function
 sys.excepthook = my_exception_hook
 
+'''
+    Переопределение классов использовалось для реализации закрытия окон
+    
+    Использованы две реализации закрытия форм:
+    1) Когда при закрытии родительского окна закрыватся все дочернии окна
+    Реализовано через добавление всех форм в список window_arr
+    2) Когда при открытом дочернем окне не возможно будет закрыть 
+    родительское окно
+    Реализовано также через window_arr
+
+    См закомментированный и не закоментированный методы ниже
+'''
+
 
 class MyQWidget(QWidget):
     def __init__(self, *args):
         super().__init__(*args)
 
-    '''Использованы две реализации закрытия форм:
-        1) Когда при закрытии родительского окна закрыватся все дочернии окна
-        Реализовано через добавление всех форм в список window_arr
-        2) Когда при открытом дочернем окне не возможно будет закрыть 
-        родительское окно
-        Реализовано также через window_arr
-        
-        См закомментированный и не закоментированный методы ниже
-    '''
     # def closeEvent(self, a0: QCloseEvent):
     #     i = window_arr[-1]
     #     while i != self:
@@ -65,16 +69,6 @@ class MyQWidget(QWidget):
 class MyQDialog(QDialog):
     def __init__(self, *args):
         super().__init__(*args)
-
-    '''Использованы две реализации закрытия форм:
-        1) Когда при закрытии родительского окна закрыватся все дочернии окна
-        Реализовано через добавление всех форм в список window_arr
-        2) Когда при открытом дочернем окне не возможно будет закрыть 
-        родительское окно
-        Реализовано также через window_arr
-
-        См закомментированный и не закоментированный методы ниже
-    '''
 
     # def closeEvent(self, a0: QCloseEvent):
     #     i = window_arr[-1]
@@ -339,7 +333,8 @@ class BuyTct(MyQWidget):
             if self.numb is not None:
                 self.accept.setEnabled(True)
                 self.statusBar.setText('')
-                self.it_price.setText(f'{int(self.price.text().split()[0]) * len(self.numb)}')
+                self.it_price.setText(
+                    f'{int(self.price.text().split()[0]) * len(self.numb)}')
             else:
                 self.statusBar.setText('Место не выбрано')
                 self.accept.setEnabled(False)
@@ -592,12 +587,12 @@ class ChooseSeat(MyQDialog):
                                            QtWidgets.QSizePolicy.Minimum)
         horizontalLayout.addItem(spacerItem)
         verticalLayout_3.addLayout(horizontalLayout)
-        #
+
         self.buttonBox = QtWidgets.QDialogButtonBox(self)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(
             QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
-        #
+
         verticalLayout.addLayout(verticalLayout_3)
         gridLayout.addLayout(verticalLayout, 0, 0, 1, 1)
         gridLayout.addWidget(self.buttonBox, 1, 0, 1, 1)
