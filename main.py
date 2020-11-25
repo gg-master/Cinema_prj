@@ -88,6 +88,18 @@ class MyQDialog(QDialog):
             del window_arr[-1]
 
 
+class MyPopup(QWidget):
+    def __init__(self, pixmap, parent=None):
+        super().__init__(parent)
+        self.label = QLabel(self)
+        pixmap = QPixmap(pixmap)
+        self.label.resize(pixmap.width(), pixmap.height())
+        self.label.setPixmap(pixmap)
+
+        # self.label.setPixmap(pixmap.scaled(self.width(), self.height(),
+                                           # Qt.KeepAspectRatio))
+
+
 class MainWindow(QMainWindow, card_widget.Ui_Form):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -233,21 +245,30 @@ class CardOfFilm(MyQWidget):
         self.setWindowTitle('Карточка фильма')
         self.playBtn.clicked.connect(self.play_trailer)
         self.buy_ticket_btn.clicked.connect(self.buy_ticket)
-        # self.poster_2.installEventFilter(self)
-        self.poster.setOpenExternalLinks(True)
-        self.poster.linkActivated.connect(self.link_active)
-        # # self.poster_2.setOpenExternalLinks(True)
-        # self.poster_2.linkActivated.connect(self.link_active)
+        self.poster.installEventFilter(self)
+        self.poster_2.installEventFilter(self)
+
         self.id = id_film
         self.load_info()
 
     def eventFilter(self, obj, event):
-        if event.type() == QtCore.QEvent.MouseButtonPress:
-            print('link active')
-        return True
-
-    def link_active(self):
-        print('link 1 active')
+        if event.type() == QEvent.MouseButtonPress:
+            mouseEvent = QMouseEvent(event)
+            if mouseEvent.buttons() == Qt.LeftButton:
+                print("Нажали левую кнопку мыши")
+            if obj == self.poster:
+                pixmap = self.path_img['poster_1']
+            elif obj == self.poster_2:
+                pixmap = self.path_img['poster_2']
+            else:
+                pixmap = base_path_for_none_img
+            self.wind = MyPopup(pixmap)
+            self.wind.setWindowFlag(QtCore.Qt.FramelessWindowHint)
+            self.wind.show()
+        if event.type() == QEvent.MouseButtonRelease:
+            print("Отпустили кнопку мыши")
+            self.wind.close()
+        return MyQWidget.eventFilter(self, obj, event)
 
     def buy_ticket(self):
         self.bt = BuyTct(self.id, self.title)
@@ -258,6 +279,9 @@ class CardOfFilm(MyQWidget):
         rez = cur.execute("""SELECT * from films
                                         where film_id like ?""",
                           (self.id,)).fetchall()[0]
+
+        self.path_img = {"poster_1": base_path_for_none_img,
+                         'poster_2': base_path_for_none_img}
         self.title = rez[1]
         rating = rez[2]
         genre = rez[3]
@@ -283,12 +307,18 @@ class CardOfFilm(MyQWidget):
                 pixmap = QPixmap(images[0])
             if len(images) > 1 and os.path.isfile(images[1]):
                 pixmap_poster = QPixmap(images[1])
+                self.path_img["poster_1"] = images[1]
+
         if poster:
             poster = poster.split(', ')
+            for img in range(len(poster)):
+                poster[img] = relative_path_for_media + poster[img]
             if os.path.isfile(poster[0]):
                 pixmap_poster_2 = QPixmap(poster[0])
+                self.path_img["poster_2"] = poster[0]
             elif images and len(images) > 2 and os.path.isfile(images[3]):
                 pixmap_poster_2 = QPixmap(images[3])
+                self.path_img["poster_2"] = images[3]
 
         win_w, win_h = self.width(), self.height()
 
@@ -302,6 +332,7 @@ class CardOfFilm(MyQWidget):
 
         self.poster_2.setPixmap(pixmap_poster_2.scaled(w_l * 3, h_l * 3,
                                                        Qt.KeepAspectRatio))
+
 
         # Загрузка текстовой информации
         self.year.setText(str(year))
