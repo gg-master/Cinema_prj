@@ -224,6 +224,8 @@
                <property name="font">
                 <font>
                  <pointsize>10</pointsize>
+                 <weight>75</weight>
+                 <bold>true</bold>
                 </font>
                </property>
                <property name="text">
@@ -264,6 +266,8 @@
                <property name="font">
                 <font>
                  <pointsize>10</pointsize>
+                 <weight>50</weight>
+                 <bold>false</bold>
                 </font>
                </property>
                <property name="text">
@@ -449,6 +453,9 @@
          <property name="text">
           <string>TextLabel</string>
          </property>
+         <property name="openExternalLinks">
+          <bool>true</bool>
+         </property>
         </widget>
        </item>
        <item>
@@ -461,6 +468,12 @@
          </property>
          <property name="text">
           <string>TextLabel</string>
+         </property>
+         <property name="openExternalLinks">
+          <bool>true</bool>
+         </property>
+         <property name="textInteractionFlags">
+          <set>Qt::LinksAccessibleByMouse</set>
          </property>
         </widget>
        </item>

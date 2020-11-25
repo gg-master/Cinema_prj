@@ -17,7 +17,9 @@ admin_login = 'admin'
 admin_pass = 'admin'
 col_in_mainWindow = 4
 
-wdw = 193 * col_in_mainWindow
+conn = sqlite3.connect(path_for_db + "mydatabase.db")
+
+wdw = 207 * col_in_mainWindow
 wdh = 346 + 50 + 150
 
 
@@ -47,8 +49,8 @@ sys.excepthook = my_exception_hook
 
 
 class MyQWidget(QWidget):
-    def __init__(self, *args):
-        super().__init__(*args)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     # def closeEvent(self, a0: QCloseEvent):
     #     i = window_arr[-1]
@@ -86,12 +88,11 @@ class MyQDialog(QDialog):
             del window_arr[-1]
 
 
-class MainWindow(MyQWidget, card_widget.Ui_Form):
+class MainWindow(QMainWindow, card_widget.Ui_Form):
     def __init__(self, parent=None):
         super().__init__(parent)
         window_arr.append(self)
         uic.loadUi(path_for_gui + "main_window.ui", self)
-        self.conn = sqlite3.connect(path_for_db + "films_db.db")
 
         # Установка минимальных размеров окна
         self.setMinimumWidth(wdw + 30 * (col_in_mainWindow + 1))
@@ -121,16 +122,16 @@ class MainWindow(MyQWidget, card_widget.Ui_Form):
             if child.widget():
                 child.widget().deleteLater()
 
-        cur = self.conn.cursor()
-        request = f'''SELECT id, title, rating, genre, 
+        cur = conn.cursor()
+        request = f'''SELECT film_id, title, rating, genre, 
                                         year, images from films
                                         where title like "{search_text}" {s}'''
         rez = cur.execute(request).fetchall()
 
         if len(rez) == 0:
-            self.statusBar.setText('Фильмы не найдены')
+            self.statusbar.showMessage('Фильмы не найдены')
         else:
-            self.statusBar.setText('')
+            self.statusbar.showMessage('')
 
         # Заполнение layout виджетами
         # Необходимо для корректной работы QScrollArea
@@ -150,6 +151,7 @@ class MainWindow(MyQWidget, card_widget.Ui_Form):
                 self.layout.addWidget(w, i, j)
 
         self.scrollAreaWidgetContents.setLayout(self.layout)
+
         self.setWindowTitle('Кинотеатр-0.0.1')
 
     def make_card_film(self, id, title, rating, genre, year, images):
@@ -161,7 +163,7 @@ class MainWindow(MyQWidget, card_widget.Ui_Form):
         return w
 
     def open_card(self):
-        self.card = CardOfFilm(self, self.conn, self.sender().id)
+        self.card = CardOfFilm(self.sender().id, parent=self)
         self.card.show()
 
     def filter_wind_open(self):
@@ -175,7 +177,7 @@ class MainWindow(MyQWidget, card_widget.Ui_Form):
         Открытие окна фильтровки поиска и обновление
         главного окна в соответствии с установленными фильтрами
         """
-        cur = self.conn.cursor()
+        cur = conn.cursor()
         rez = cur.execute("""SELECT DISTINCT year, genre, rating, producer 
         from films""").fetchall()
         years = list(set(map(lambda x: str(x[0]), rez)))
@@ -213,29 +215,48 @@ class MainWindow(MyQWidget, card_widget.Ui_Form):
         self.aW = AdminSignIn(self)
         self.aW.show()
 
+    def closeEvent(self, a0: QCloseEvent):
+        if window_arr[-1] != self:
+            a0.ignore()
+            window_arr[-1].activateWindow()
+        else:
+            window_arr[-1].close()
+            del window_arr[-1]
+
 
 class CardOfFilm(MyQWidget):
-    def __init__(self, db_con, id_film, parent=None):
-        super().__init__(parent)
+    def __init__(self, id_film, parent=None):
+        super().__init__()
         window_arr.append(self)
-        # self.setParent(parent)
         uic.loadUi(path_for_gui + 'card_of_film.ui', self)
 
         self.setWindowTitle('Карточка фильма')
         self.playBtn.clicked.connect(self.play_trailer)
         self.buy_ticket_btn.clicked.connect(self.buy_ticket)
-        self.con = db_con
+        # self.poster_2.installEventFilter(self)
+        self.poster.setOpenExternalLinks(True)
+        self.poster.linkActivated.connect(self.link_active)
+        # # self.poster_2.setOpenExternalLinks(True)
+        # self.poster_2.linkActivated.connect(self.link_active)
         self.id = id_film
         self.load_info()
+
+    def eventFilter(self, obj, event):
+        if event.type() == QtCore.QEvent.MouseButtonPress:
+            print('link active')
+        return True
+
+    def link_active(self):
+        print('link 1 active')
 
     def buy_ticket(self):
         self.bt = BuyTct(self.id, self.title)
         self.bt.show()
 
     def load_info(self):
-        cur = self.con.cursor()
+        cur = conn.cursor()
         rez = cur.execute("""SELECT * from films
-                                        where id like ?""",
+                                        where film_id like ?""",
                           (self.id,)).fetchall()[0]
         self.title = rez[1]
         rating = rez[2]
@@ -245,10 +266,9 @@ class CardOfFilm(MyQWidget):
         year = str(rez[6]) + ' год'
         duration = str(rez[7]) + " мин"
         description = rez[8]
-        poster = rez[9 + 1]
-        images = rez[10 + 1]
-        self.trailer = relative_path_for_media + str(rez[11 + 1])
-        self.cinema_id = rez[12 + 1]
+        poster = rez[9]
+        images = rez[10]
+        self.trailer = relative_path_for_media + str(rez[11])
 
         pixmap = QPixmap(base_path_for_none_img)
         pixmap_poster = QPixmap(base_path_for_none_img)
@@ -277,7 +297,6 @@ class CardOfFilm(MyQWidget):
         self.img.setPixmap(pixmap.scaled(w_l + win_w // 2,
                                          h_l + win_h // 2,
                                          Qt.KeepAspectRatio))
-
         self.poster.setPixmap(pixmap_poster.scaled(w_l * 3, h_l * 3,
                                                    Qt.KeepAspectRatio))
 
@@ -307,7 +326,6 @@ class BuyTct(MyQWidget):
         super().__init__(parent)
         window_arr.append(self)
         uic.loadUi(path_for_gui + 'buy_tck.ui', self)
-        self.conn = sqlite3.connect(path_for_db + "sinema_db.db")
         self.cancel.clicked.connect(self.close_act)
         self.accept.clicked.connect(self.accept_action)
 
@@ -322,7 +340,7 @@ class BuyTct(MyQWidget):
         self.load_cinemas()
 
     def choose_seat(self):
-        # try:
+        try:
             cs = ChooseSeat(self.places, self)
             if self.accept.isEnabled() and self.numb is not None:
                 cs.set_selected_btn(self.numb, isSelected=True)
@@ -338,8 +356,8 @@ class BuyTct(MyQWidget):
             else:
                 self.statusBar.setText('Место не выбрано')
                 self.accept.setEnabled(False)
-        # except Exception:
-        #     self.statusBar.setText('Выберите кинотеатр и время')
+        except Exception:
+            self.statusBar.setText('Выберите кинотеатр и время')
 
     def create_new_seat(self):
         if self.scrollArea_2:
@@ -406,7 +424,7 @@ class BuyTct(MyQWidget):
         self.verticalLayout_6.addWidget(self.scrollArea_2)
 
     def load_other(self):
-        cur = self.conn.cursor()
+        cur = conn.cursor()
         name_c = self.cinemas.currentText()
         time_s = self.times.currentText()
 
@@ -414,19 +432,22 @@ class BuyTct(MyQWidget):
                                     where name_cinema like ?""", (
             name_c,)).fetchall()[0]
         id_c = rez_c[0]
-        rez_f = cur.execute("""Select time_end, places, price, id 
-        from timetable 
+        rez_f = cur.execute("""Select 
+                time_end, places, 
+                price, id, cinema_hall_id 
+                from timetable 
                 where id_film like ? 
-                and id_cinema like ? 
+                and cinema_id like ? 
                 and time_start like ?""", (
             self.film_id, id_c, time_s)).fetchall()[0]
         self.time_to.setText(rez_f[0])
-        self.price.setText(str(rez_f[-2]))
-        self.places = rez_f[-3].split(', ')
-        self.id_films_in_c = rez_f[-1]
+        self.price.setText(str(rez_f[2]))
+        self.places = rez_f[1].split(', ')
+        self.id_films_in_c = rez_f[-2]
+        self.cinema_hall_id = rez_c[-1]
 
     def load_time(self):
-        cur = self.conn.cursor()
+        cur = conn.cursor()
         name_c = self.cinemas.currentText()
 
         rez_c = cur.execute("""SELECT * from cinemas 
@@ -437,17 +458,18 @@ class BuyTct(MyQWidget):
         self.phone.setText(rez_c[3])
 
         id_c = rez_c[0]
-        rez_time = cur.execute("""Select time_start from timetable 
-        where id_film like ? and id_cinema like ?""", (
+        rez_time = cur.execute("""SELECT time_start from timetable 
+        where id_film like ? and cinema_id like ?""", (
             self.film_id, id_c)).fetchall()
         if not rez_time:
             self.statusBar.setText('Данного фильма не найденно')
             return
         rez_s = list(map(lambda x: str(x[0]), rez_time))
+        self.times.clear()
         self.times.addItems(rez_s)
 
     def load_cinemas(self):
-        cur = self.conn.cursor()
+        cur = conn.cursor()
         self.title.setText(self.film_title)
         self.dct_cinema = {}
         rez = cur.execute("""SELECT id, name_cinema from cinemas""").fetchall()
@@ -461,14 +483,16 @@ class BuyTct(MyQWidget):
         self.close()
 
     def accept_action(self):
-        cur = self.conn.cursor()
-        self.places[self.numb] = '1'
+        # TODO Переделать покупку билетов
+        cur = conn.cursor()
+        for i in self.numb:
+            self.places[i] = '1'
         s = f'{", ".join(self.places)}'
         req = f'{s}'
         cur.execute(f'''UPDATE timetable 
                         set places = ? 
                         WHERE id = ?''', (req, self.id_films_in_c))
-        self.conn.commit()
+        conn.commit()
         self.ticket = Ticket()
         self.ticket.show()
         # self.close()
