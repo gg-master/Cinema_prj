@@ -87,8 +87,8 @@ class MyQDialog(QDialog):
 
 
 class MainWindow(MyQWidget, card_widget.Ui_Form):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         window_arr.append(self)
         uic.loadUi(path_for_gui + "main_window.ui", self)
         self.conn = sqlite3.connect(path_for_db + "films_db.db")
@@ -215,8 +215,8 @@ class MainWindow(MyQWidget, card_widget.Ui_Form):
 
 
 class CardOfFilm(MyQWidget):
-    def __init__(self, parent, db_con, id_film):
-        super().__init__()
+    def __init__(self, db_con, id_film, parent=None):
+        super().__init__(parent)
         window_arr.append(self)
         # self.setParent(parent)
         uic.loadUi(path_for_gui + 'card_of_film.ui', self)
@@ -303,8 +303,8 @@ class CardOfFilm(MyQWidget):
 
 
 class BuyTct(MyQWidget):
-    def __init__(self, id, title):
-        super().__init__()
+    def __init__(self, id, title, parent=None):
+        super().__init__(parent)
         window_arr.append(self)
         uic.loadUi(path_for_gui + 'buy_tck.ui', self)
         self.conn = sqlite3.connect(path_for_db + "sinema_db.db")
@@ -322,7 +322,7 @@ class BuyTct(MyQWidget):
         self.load_cinemas()
 
     def choose_seat(self):
-        try:
+        # try:
             cs = ChooseSeat(self.places, self)
             if self.accept.isEnabled() and self.numb is not None:
                 cs.set_selected_btn(self.numb, isSelected=True)
@@ -338,8 +338,8 @@ class BuyTct(MyQWidget):
             else:
                 self.statusBar.setText('Место не выбрано')
                 self.accept.setEnabled(False)
-        except Exception:
-            self.statusBar.setText('Выберите кинотеатр и время')
+        # except Exception:
+        #     self.statusBar.setText('Выберите кинотеатр и время')
 
     def create_new_seat(self):
         if self.scrollArea_2:
@@ -475,8 +475,8 @@ class BuyTct(MyQWidget):
 
 
 class Ticket(QWidget):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         uic.loadUi(path_for_gui + 'successful_purchase.ui', self)
 
 
@@ -500,7 +500,7 @@ class MyPushButton(QPushButton):
 
 class ChooseSeat(MyQDialog):
     def __init__(self, places, parent=None):
-        super().__init__()
+        super().__init__(parent)
         window_arr.append(self)
         self.places = places
 
@@ -511,6 +511,10 @@ class ChooseSeat(MyQDialog):
         self.setupUi()
         self.buttonBox.accepted.connect(self.c_action)
         self.buttonBox.rejected.connect(self.set_default_places)
+        self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
+        # self.setWindowFlag(Qt.WindowCloseButtonHint, False)
+        self.setToolTip("left-click  -  book"
+                        "\nright-click  -  cancel your reservation")
 
     def setupUi(self):
         """Происходит загрузка интерфейса посредством циклического
@@ -629,8 +633,8 @@ class ChooseSeat(MyQDialog):
 
 
 class TrailerWidget(MyQWidget):
-    def __init__(self, url, title):
-        super().__init__()
+    def __init__(self, url, title, parent=None):
+        super().__init__(parent)
         window_arr.append(self)
         self.ui = uic.loadUi(path_for_gui + "trailer.ui", self)
         self.url = url
@@ -656,8 +660,8 @@ class TrailerWidget(MyQWidget):
 
 
 class FilterDialog(MyQDialog):
-    def __init__(self):
-        QDialog.__init__(self)
+    def __init__(self, parent=None):
+        super().__init__(parent)
         uic.loadUi(path_for_gui + 'filter.ui', self)
         self.setWindowTitle('Настройки сортировки')
         self.buttonBox.accepted.connect(self.acept_data)
@@ -703,13 +707,13 @@ class FilterDialog(MyQDialog):
         return self.a
 
 
-class AdminSignIn(QDialog):
-    def __init__(self, Form):
-        QDialog.__init__(self)
+class AdminSignIn(MyQDialog):
+    def __init__(self, parent):
+        super().__init__(parent)
         window_arr.append(self)
         uic.loadUi(path_for_gui + 'admin_sign_in.ui', self)
         self.pushButton.clicked.connect(self.acept_data)
-        self.Form = Form
+        self.Form = parent
 
     def acept_data(self):
         # TODO вставить открытие интерфейса для админа
