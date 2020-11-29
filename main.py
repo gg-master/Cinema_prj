@@ -6,6 +6,9 @@ import card_widget
 from PyQt5 import uic
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.Qt import *
+import load_url_img
+import QRcode
+import time
 
 # Settings
 base_path_for_none_img = r'system_image\none_img.jpg'
@@ -324,7 +327,7 @@ class CardOfFilm(MyQWidget):
         pixmap_image = QPixmap(base_path_for_none_img)
         pixmap_image_2 = QPixmap(base_path_for_none_img)
 
-        import load_url_img
+
         #  Загрузка всех изображений в карточку
         if poster:
             poster = poster.split(', ')
@@ -383,8 +386,9 @@ class CardOfFilm(MyQWidget):
         self.actors_2.setText(actors)
 
     def play_trailer(self):
+        # TODO попробовать реализовать открытие видео по ссылке
         if self.trailer is not None and os.path.isfile(self.trailer):
-            self.vid = TrailerWidget(self.trailer, self.title)
+            self.vid = TrailerWidget(self, self.trailer, self.title)
             self.vid.show()
         else:
             self.statusBar.setText('Трейлер не найден')
@@ -606,11 +610,9 @@ class Ticket(MyQWidget):
     def make_qrcode(self):
         """Возврадащет сгенеррированный Qrcode как объект Qpixmap"""
         import qrcode
-        from QRcode import Image
         from numpy import unicode
-
         text = unicode('Билет подтвержден')
-        return qrcode.make(text, image_factory=Image).pixmap()
+        return qrcode.make(text, image_factory=QRcode.Image).pixmap()
 
     def save_tct(self):
         global tickets_numb
@@ -789,16 +791,27 @@ class ChooseSeat(MyQDialog):
 
 
 class TrailerWidget(MyQWidget):
-    def __init__(self, url, title, parent=None):
-        super().__init__(parent)
+    def __init__(self, parent, url, title):
+        super().__init__()
         window_arr.append(self)
+        self.parent = parent
         self.ui = uic.loadUi(path_for_gui + "trailer.ui", self)
         self.url = url
         self.setWindowTitle(title)
 
+        # playlist = QMediaPlaylist()
+        # playlist.addMedia(QUrl("http://example.com/movie1.mp4"))
+        #
+        # player = QMediaPlayer()
+        # player.setPlaylist(playlist)
+        #
+        # videoWidget = QVideoWidget()
+        # player.setVideoOutput(videoWidget)
+        # videoWidget.show()
+        #
+        # player.play()
         self.player = QMediaPlayer(None, QMediaPlayer.VideoSurface)
-        self.player.setMedia(QMediaContent(QUrl.
-                                           fromLocalFile(url)))
+        self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.url)))
         self.player.setVideoOutput(self.ui.widget)
         self.play()
         self.play_btn.clicked.connect(self.play)
@@ -813,6 +826,7 @@ class TrailerWidget(MyQWidget):
     def closeEvent(self, a0: QCloseEvent):
         self.player.stop()
         self.close()
+        del window_arr[-1]
 
 
 class FilterDialog(MyQDialog):
@@ -886,9 +900,65 @@ class AdminSignIn(MyQDialog):
         self.close()
 
 
-if __name__ == '__main__':
+class MovieSplashScreen(QSplashScreen):
+    def __init__(self, movie, parent=None):
+        movie.jumpToFrame(0)
+        pixmap = QPixmap(movie.frameRect().size())
+
+        QSplashScreen.__init__(self, pixmap)
+        self.movie = movie
+        self.movie.frameChanged.connect(self.repaint)
+
+    def showEvent(self, event):
+        self.movie.start()
+
+    def hideEvent(self, event):
+            self.movie.stop()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        pixmap = self.movie.currentPixmap()
+        self.setMask(pixmap.mask())
+        painter.drawPixmap(0, 0, pixmap)
+
+    def sizeHint(self):
+        return self.movie.scaledSize()
+#
+# if __name__ == '__main__':
+#     window_arr = []
+#     app = QApplication(sys.argv)
+#     ex = MainWindow()
+#     ex.show()
+#     sys.exit(app.exec())
+
+
+if __name__ == "__main__":
     window_arr = []
     app = QApplication(sys.argv)
-    ex = MainWindow()
-    ex.show()
-    sys.exit(app.exec())
+    movie = QMovie("system_image/load.gif")
+    splash = MovieSplashScreen(movie)
+    splash.show()
+    start = time.time()
+
+    while movie.state() == QMovie.Running and time.time() < start + 4:
+        app.processEvents()
+
+    window = MainWindow()
+    window.show()
+    splash.finish(window)
+    sys.exit(app.exec_())
+
+# if __name__ == '__main__':
+#     import time
+#     app = QApplication(sys.argv)
+#     pixmap = QPixmap(path_for_system_img + 'log.jpg')
+#     splash = QSplashScreen(pixmap)
+#     splash.show()
+#     for n in ("HW presence", "net connectivity", "API connectivity"):
+#         splash.showMessage("Check for {0}".format(n))
+#         time.sleep(1)
+#         app.processEvents()
+#     mainWin = MainWindow()
+#     splash.finish(mainWin)
+#     mainWin.show()
+#     sys.exit(app.exec_())
