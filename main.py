@@ -9,6 +9,7 @@ from PyQt5.Qt import *
 
 # Settings
 base_path_for_none_img = r'system_image\none_img.jpg'
+path_for_system_img = 'system_image\\'
 relative_path_for_media = 'films_image\\'
 path_for_gui = 'ui_files\\'
 path_for_db = 'database\\'
@@ -21,6 +22,8 @@ conn = sqlite3.connect(path_for_db + "mydatabase.db")
 
 wdw = 207 * col_in_mainWindow
 wdh = 346 + 50 + 150
+
+tickets_numb = 0
 
 
 def my_exception_hook(exctype, value, traceback):
@@ -263,12 +266,9 @@ class CardOfFilm(MyQWidget):
             if event.type() == QEvent.MouseButtonPress:
                 mouseEvent = QMouseEvent(event)
                 if mouseEvent.buttons() == Qt.LeftButton:
-                    print("Нажали левую кнопку мыши")
-                self.wind = MyPopup(self, pixmap)
-
-                self.wind.show()
+                    self.wind = MyPopup(self, pixmap)
+                    self.wind.show()
             if event.type() == QEvent.MouseButtonRelease:
-                print("Отпустили кнопку мыши")
                 self.wind.close()
 
         return MyQWidget.eventFilter(self, obj, event)
@@ -460,7 +460,7 @@ class BuyTct(MyQWidget):
     def load_other(self):
         cur = conn.cursor()
         name_c = self.cinemas.currentText()
-        time_s = self.times.currentText()
+        self.time_s = self.times.currentText()
 
         rez_c = cur.execute("""SELECT * from cinemas 
                                     where name_cinema like ?""", (
@@ -473,7 +473,7 @@ class BuyTct(MyQWidget):
                 where id_film like ? 
                 and cinema_id like ? 
                 and time_start like ?""", (
-            self.film_id, id_c, time_s)).fetchall()[0]
+            self.film_id, id_c, self.time_s)).fetchall()[0]
         self.time_to.setText(rez_f[0])
         self.price.setText(str(rez_f[2]))
         self.places = rez_f[1].split(', ')
@@ -523,19 +523,76 @@ class BuyTct(MyQWidget):
             self.places[i] = '1'
         s = f'{", ".join(self.places)}'
         req = f'{s}'
-        cur.execute(f'''UPDATE timetable 
-                        set places = ? 
-                        WHERE id = ?''', (req, self.id_films_in_c))
-        conn.commit()
-        self.ticket = Ticket()
+        # cur.execute(f'''UPDATE timetable
+        #                 set places = ?
+        #                 WHERE id = ?''', (req, self.id_films_in_c))
+        # conn.commit()
+        place = self.numb[0] + 1
+        self.ticket = Ticket(self, place)
         self.ticket.show()
         # self.close()
 
 
-class Ticket(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
+class Ticket(MyQWidget):
+    def __init__(self, parent, place):
+        super().__init__()
+        window_arr.append(self)
         uic.loadUi(path_for_gui + 'successful_purchase.ui', self)
+        self.pushButton.clicked.connect(self.choose_way)
+
+        self.pixmap = QPixmap(path_for_system_img + 'ticket.jpg')
+        qp = QPainter()
+        qp.begin(self.pixmap)
+        qp.setFont(QFont('Peignot', 17))
+        qp.drawText(QPoint(123, 112), parent.film_title)
+        qp.drawText(QPoint(123, 148), parent.cinema_hall_id)
+        qp.drawText(QPoint(132, 176), str(place))
+
+        qp.setFont(QFont('Peignot', 15))
+        qp.drawText(QPoint(57, 232), f'{parent.time_s}')
+        qp.drawText(QPoint(57, 249), f'{parent.time_to.text()}')
+
+        qp.setFont(QFont('Peignot', 13))
+        qp.drawText(QPoint(102, 284), f'{parent.phone.text()}')
+
+        qrcode = self.make_qrcode()
+        qrcode = qrcode.scaled(179, 125, Qt.KeepAspectRatio)
+        qp.drawPixmap(QPoint(360, 175), qrcode)
+        qp.end()
+
+        # 321 175
+        self.BtnIsClicked = False
+        self.label.setPixmap(self.pixmap)
+
+    def make_qrcode(self):
+        """Возврадащет сгенеррированный Qrcode как объект Qpixmap"""
+        import qrcode
+        from QRcode import Image
+        from numpy import unicode
+
+        text = unicode('Билет подтвержден')
+        return qrcode.make(text, image_factory=Image).pixmap()
+
+    def save_tct(self):
+        global tickets_numb
+        if self.BtnIsClicked:
+            self.render(self.pixmap)
+            self.pixmap.save(f'{self.way}/Билет-№{tickets_numb}.jpg')
+            tickets_numb += 1
+
+    def choose_way(self):
+        from PyQt5.QtWidgets import QFileDialog
+        self.way = QFileDialog.getExistingDirectory()
+        if self.way:
+            self.BtnIsClicked = True
+            self.save_tct()
+
+    def closeEvent(self, a0: QCloseEvent):
+        if self.BtnIsClicked:
+            self.destroy()
+            del window_arr[-1]
+        else:
+            a0.ignore()
 
 
 class MyPushButton(QPushButton):
