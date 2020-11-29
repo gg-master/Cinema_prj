@@ -472,13 +472,14 @@ class BuyTct(MyQWidget):
                 from timetable 
                 where id_film like ? 
                 and cinema_id like ? 
-                and time_start like ?""", (
+                and time_start  like ?""", (
             self.film_id, id_c, self.time_s)).fetchall()[0]
         self.time_to.setText(rez_f[0])
         self.price.setText(str(rez_f[2]))
         self.places = rez_f[1].split(', ')
         self.id_films_in_c = rez_f[-2]
-        self.cinema_hall_id = rez_c[-1]
+        self.cinema_hall_id = rez_f[-1]
+        self.hall.setText(str(self.cinema_hall_id))
 
     def load_time(self):
         cur = conn.cursor()
@@ -517,20 +518,23 @@ class BuyTct(MyQWidget):
         self.close()
 
     def accept_action(self):
-        # TODO Переделать покупку билетов
         cur = conn.cursor()
         for i in self.numb:
             self.places[i] = '1'
         s = f'{", ".join(self.places)}'
         req = f'{s}'
-        # cur.execute(f'''UPDATE timetable
-        #                 set places = ?
-        #                 WHERE id = ?''', (req, self.id_films_in_c))
-        # conn.commit()
-        place = self.numb[0] + 1
-        self.ticket = Ticket(self, place)
-        self.ticket.show()
-        # self.close()
+        cur.execute(f'''UPDATE timetable
+                        set places = ?
+                        WHERE id = ?''', (req, self.id_films_in_c))
+        conn.commit()
+        for i in range(len(self.numb)):
+            place = self.numb[i] + 1
+            self.ticket = Ticket(self, place)
+            self.ticket.show()
+        self.statusBar.setText("Билеты сохранены. Ждем вас на сеансе")
+        self.accept.setEnabled(False)
+        self.choose_place_btn.setEnabled(False)
+        self.cancel.setEnabled(False)
 
 
 class Ticket(MyQWidget):
@@ -545,8 +549,8 @@ class Ticket(MyQWidget):
         qp.begin(self.pixmap)
         qp.setFont(QFont('Peignot', 17))
         qp.drawText(QPoint(123, 112), parent.film_title)
-        qp.drawText(QPoint(123, 148), parent.cinema_hall_id)
-        qp.drawText(QPoint(132, 176), str(place))
+        qp.drawText(QPoint(123, 148), str(parent.cinema_hall_id))
+        qp.drawText(QPoint(123, 176), str(place))
 
         qp.setFont(QFont('Peignot', 15))
         qp.drawText(QPoint(57, 232), f'{parent.time_s}')
@@ -586,13 +590,15 @@ class Ticket(MyQWidget):
         if self.way:
             self.BtnIsClicked = True
             self.save_tct()
+            self.close()
 
     def closeEvent(self, a0: QCloseEvent):
         if self.BtnIsClicked:
-            self.destroy()
+            self.close()
             del window_arr[-1]
         else:
             a0.ignore()
+            self.statusBar.setText('Выберите путь для сохранения')
 
 
 class MyPushButton(QPushButton):
