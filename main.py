@@ -92,17 +92,21 @@ class MyQDialog(QDialog):
 
 
 class MyPopup(QWidget):
-    def __init__(self, parent, pixmap):
+    def __init__(self, parent, pixmap_path):
         super().__init__()
         self.label = QLabel(self)
+
         self.setWindowFlag(QtCore.Qt.FramelessWindowHint)
 
-        pixmap = QPixmap(pixmap)
+        pixmap = QPixmap(pixmap_path)
+
         self.resize(parent.width() // 2, parent.height())
+        self.label.resize(self.width(), self.height())
+        self.move(parent.x() + parent.width() // 2 - self.label.width() // 2,
+                  parent.y() + parent.height() // 2 - self.label.height() // 2 + 30)
+
         self.label.setPixmap(pixmap.scaled(self.width(), self.height(),
                                            Qt.KeepAspectRatio))
-        self.move(parent.x() + parent.width() // 2 - self.width() // 2,
-                  parent.y() + parent.height() // 2 - self.height() // 2)
 
 
 class MainWindow(QMainWindow, card_widget.Ui_Form):
@@ -141,7 +145,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
 
         cur = conn.cursor()
         request = f'''SELECT film_id, title, rating, genre, 
-                                        year, images from films
+                                        year, poster from films
                                         where title like "{search_text}" {s}'''
         rez = cur.execute(request).fetchall()
 
@@ -152,17 +156,21 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
 
         # Заполнение layout виджетами
         # Необходимо для корректной работы QScrollArea
+        """Заполнение таблицы карточками"""
         for i in range(0, len(rez) + col_in_mainWindow, col_in_mainWindow):
             for j in range(col_in_mainWindow):
                 if i + j >= len(rez):
                     break
+                # images подразумевается как постер. т.е основная картинка
                 id, title, rating, genre, year, images = rez[i + j]
+                """Форматируем даные, добавляем коренную папку с картинкам"""
                 if images:
                     images = images.split(', ')
                     for img in range(len(images)):
-                        images[img] = \
-                            f'{relative_path_for_media}{images[img]}'
-                # TODO Поэксперементировать с настройкой размеров изображения
+                        if images[img] and not images[img].startswith('http'):
+                            images[img] = \
+                                f'{relative_path_for_media}{images[img]}'
+                """Создаем мини-карточку фильма"""
                 w = self.make_card_film(id, title, rating, genre, year,
                                         [images, base_path_for_none_img])
                 self.layout.addWidget(w, i, j)
@@ -180,7 +188,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
         return w
 
     def open_card(self):
-        self.card = CardOfFilm(self.sender().id, parent=self)
+        self.card = CardOfFilm(self, self.sender().id)
         self.card.show()
 
     def filter_wind_open(self):
@@ -199,6 +207,17 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
         from films""").fetchall()
         years = list(set(map(lambda x: str(x[0]), rez)))
         genre = list(set(map(lambda x: x[1], rez)))
+
+        """Стоит включить, но придется настроить поиск
+        Проблема состоит в том, что вместо определенных жанров, загружаются 
+        сразу те, которые определенеы у фильмов"""
+        # new_genre = set()
+        # for i in genre:
+        #     arr = i.split(', ')
+        #     for j in arr:
+        #         j = j.strip('\n')
+        #         new_genre.add(j)
+        # genre = list(sorted(list(new_genre)))
         rating = list(set(map(lambda x: str(x[2]), rez)))
         producer = []
         for i in rez:
@@ -242,7 +261,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
 
 
 class CardOfFilm(MyQWidget):
-    def __init__(self, id_film, parent=None):
+    def __init__(self, parent, id_film):
         super().__init__()
         window_arr.append(self)
         uic.loadUi(path_for_gui + 'card_of_film.ui', self)
@@ -293,49 +312,65 @@ class CardOfFilm(MyQWidget):
         year = str(rez[6]) + ' год'
         duration = str(rez[7]) + " мин"
         description = rez[8]
+        """Под постером подразумевается основная картинка
+        Под images подразумеваются кадры из фильма и тд
+        Здесь """
         poster = rez[9]
         images = rez[10]
         self.trailer = relative_path_for_media + str(rez[11])
 
-        pixmap = QPixmap(base_path_for_none_img)
+
         pixmap_poster = QPixmap(base_path_for_none_img)
-        pixmap_poster_2 = QPixmap(base_path_for_none_img)
+        pixmap_image = QPixmap(base_path_for_none_img)
+        pixmap_image_2 = QPixmap(base_path_for_none_img)
 
+        import load_url_img
         #  Загрузка всех изображений в карточку
-        if images:
-            images = images.split(', ')
-            for img in range(len(images)):
-                images[img] = relative_path_for_media + images[img]
-            if os.path.isfile(images[0]):
-                pixmap = QPixmap(images[0])
-            if len(images) > 1 and os.path.isfile(images[1]):
-                pixmap_poster = QPixmap(images[1])
-                self.path_img["poster_1"] = images[1]
-
         if poster:
             poster = poster.split(', ')
             for img in range(len(poster)):
-                poster[img] = relative_path_for_media + poster[img]
-            if os.path.isfile(poster[0]):
-                pixmap_poster_2 = QPixmap(poster[0])
-                self.path_img["poster_2"] = poster[0]
-            elif images and len(images) > 2 and os.path.isfile(images[3]):
-                pixmap_poster_2 = QPixmap(images[3])
-                self.path_img["poster_2"] = images[3]
+                if poster[img] and not poster[img].startswith('http'):
+                    poster[img] = \
+                        f'{relative_path_for_media}{poster[img]}'
+            if poster[0].startswith('http'):
+                pixmap_poster = load_url_img.load_image_from_url(poster[0])
+            elif os.path.isfile(poster[0]):
+                pixmap_poster = QPixmap(poster[0])
+            elif len(poster) > 1 and os.path.isfile(poster[1]):
+                pixmap_poster = QPixmap(poster[1])
+            elif len(poster) > 1 and poster[1].startswith('http'):
+                pixmap_poster = load_url_img.load_image_from_url(poster[1])
+        if images:
+            images = images.split(', ')
+            for img in range(len(images)):
+                if images[img] and not images[img].startswith('http'):
+                    images[img] = \
+                        f'{relative_path_for_media}{images[img]}'
+            if images[0].startswith('http'):
+                pixmap_image = load_url_img.load_image_from_url(images[0])
+                self.path_img["poster_1"] = images[0]
+            elif len(images) > 1 and images[1].startswith('http'):
+                pixmap_image_2 = load_url_img.load_image_from_url(images[1])
+                self.path_img["poster_2"] = images[1]
+            elif os.path.isfile(images[0]):
+                pixmap_image = QPixmap(images[0])
+                self.path_img["poster_1"] = images[0]
+            elif len(images) > 1 and os.path.isfile(images[1]):
+                pixmap_image_2 = QPixmap(images[1])
+                self.path_img["poster_2"] = images[1]
 
         win_w, win_h = self.width(), self.height()
 
         # Загрузка фото
         w_l, h_l = self.img.width(), self.img.height()
-        self.img.setPixmap(pixmap.scaled(w_l + win_w // 2,
+        self.img.setPixmap(pixmap_poster.scaled(w_l + win_w // 2,
                                          h_l + win_h // 2,
                                          Qt.KeepAspectRatio))
-        self.poster.setPixmap(pixmap_poster.scaled(w_l * 3, h_l * 3,
+        self.poster.setPixmap(pixmap_image.scaled(w_l * 3, h_l * 3,
                                                    Qt.KeepAspectRatio))
 
-        self.poster_2.setPixmap(pixmap_poster_2.scaled(w_l * 3, h_l * 3,
+        self.poster_2.setPixmap(pixmap_image_2.scaled(w_l * 3, h_l * 3,
                                                        Qt.KeepAspectRatio))
-
 
         # Загрузка текстовой информации
         self.year.setText(str(year))

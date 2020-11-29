@@ -122,10 +122,15 @@ class Ui_Form(object):
     def retranslateUi(self, Form, title, rating, genre, year, images):
         _translate = QtCore.QCoreApplication.translate
         # Form.setWindowTitle(_translate("Form", "Form"))
-
+        import load_url_img
         pixmap = QPixmap(images[1])
-        if images[0] and os.path.isfile(images[0][0]):
+        if images[0] and images[0][0].startswith('http'):
+            pixmap = load_url_img.load_image_from_url(images[0][0])
+        elif images[0] and images[0][0] and os.path.isfile(images[0][0]):
             pixmap = QPixmap(images[0][0])
+        elif images[0] and len(images[0]) > 1 and \
+                images[0][1] and os.path.isfile(images[0][1]):
+            pixmap = QPixmap(images[0][1])
 
         # win_w, win_h = Form.width(), Form.height()
         # win_w, win_h = self.layoutWidget.width(), self.layoutWidget.height()
