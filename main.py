@@ -11,7 +11,7 @@ import QRcode
 import time
 
 # Settings
-with_wind_load = True
+with_wind_load = False
 base_path_for_none_img = r'system_image\none_img.jpg'
 path_for_system_img = 'system_image\\'
 relative_path_for_media = 'films_image\\'
@@ -53,6 +53,20 @@ sys.excepthook = my_exception_hook
 
     См закомментированный и не закоментированный методы ниже
 '''
+
+
+class WindowArr(list):
+    def __init__(self):
+        super().__init__()
+        self.dct = {}
+        self.list = list()
+
+    def append(self, object):
+        print(object.__class__.__name__)
+        self.list.append(object)
+
+    def __getitem__(self, item):
+        return self.list[item]
 
 
 class MyQWidget(QWidget):
@@ -121,6 +135,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
     def __init__(self, parent=None):
         super().__init__(parent)
         window_arr.append(self)
+        self.setStyleSheet(open("styles/main_wind.css", "r").read())
         uic.loadUi(path_for_gui + "main_window.ui", self)
 
         # Установка минимальных размеров окна
@@ -154,7 +169,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
 
         cur = conn.cursor()
         # Запрос в базу
-        request = f'''SELECT film_id, title, rating, genre, 
+        request = f'''SELECT id, title, rating, genre, 
                                         year, poster from films
                                         where title like "{search_text}" {s}'''
         rez = cur.execute(request).fetchall()
@@ -327,7 +342,7 @@ class CardOfFilm(MyQWidget):
         """Загрузка основной информации в оставшиеся label в gui"""
         cur = conn.cursor()
         rez = cur.execute("""SELECT * from films
-                                        where film_id like ?""",
+                                        where id like ?""",
                           (self.id,)).fetchall()[0]
 
         self.path_img = {"poster_1": None,
@@ -1052,7 +1067,7 @@ class MovieSplashScreen(QSplashScreen):
 #
 
 if __name__ == "__main__":
-    window_arr = []
+    window_arr = WindowArr()
     if not with_wind_load:
             app = QApplication(sys.argv)
             ex = MainWindow()

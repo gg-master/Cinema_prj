@@ -31,9 +31,11 @@ class Ui_Form(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(Form.sizePolicy().hasHeightForWidth())
         self.widget.setSizePolicy(sizePolicy)
-        # # self.layoutWidget.setStyleSheet(
-        # #     "background-color: rgb(228, 225, 229);")
-        #
+        self.widget.setStyleSheet(open("styles/card.css", "r").read())
+        # self.widget.setStyleSheet(
+        #     "background-color: rgb(235, 240, 255);\n"
+        #     "border-radius: 10px;")
+        #     "background-color: rgb(228, 225, 229);\n"
         # self.widget.setGeometry(QtCore.QRect(0, 0, 191, 341))
         # # self.layoutWidget.setMaximumWidth(193)
         # # self.layoutWidget.setMaximumHeight(346)
@@ -112,6 +114,13 @@ class Ui_Form(object):
         self.btn.setMinimumWidth(189)
         self.btn.setMinimumHeight(35)
         self.btn.setObjectName("btn")
+        # self.btn.setStyleSheet("background-color: rgb(116, 125, 255);\n"
+        #                        "border-width:1px;\n"
+        #                        "border-radius: 10px;\n"
+        #                        "border-color: black;\n"
+        #                        "color: rgb(255, 255, 255);\n"
+        #                        "")
+
         self.verticalLayout.addWidget(self.btn)
 
         self.retranslateUi(Form, title, rating, genre,

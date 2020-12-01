@@ -1,0 +1,32 @@
+QMainWindow{
+    /*background-color: rgb(249, 243, 246);*/
+}
+QScrollArea{
+   /*background-color: rgb(249, 243, 246);*/
+}
+QWidget{
+    /*background-color: rgb(249, 243, 246);*/
+}
+QScrollBar:vertical {
+    /*border: 0px solid #999999;*/
+    /*background:white;*/
+    background: rgb(249, 243, 246);
+    width: 15px;
+    margin: 0px 0px 0px 0px;
+    border: 1px transparent #2A2929;
+    border-radius: 6px;
+}
+QScrollBar::handle:vertical{
+    /*background: qlineargradient(x1:0, y1:0, x2:1, y2:0,*/
+        /*stop: 0 rgb(32, 47, 130), stop: 0.5 rgb(32, 47, 130),  stop:1 rgb(32, 47, 130));*/
+    background: #bbdefb;
+    subcontrol-position: bottom;
+    subcontrol-origin: margin;
+    min-height: 5px;
+    border-radius: 6px;
+}
+/*QPushButton#search_btn, QPushButton#sort_btn{*/
+    /*background-color: rgb(255, 64, 129);*/
+    /*border-radius: 4px;*/
+    /*color: white;*/
+/*}*/

@@ -173,8 +173,19 @@
        <height>35</height>
       </size>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: rgb(116, 125, 255);
+border-width:1px;
+border-radius: 10px;
+border-color: black;
+color: rgb(255, 255, 255);
+</string>
+     </property>
      <property name="text">
       <string>Открыть карточку</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
      </property>
     </widget>
    </item>

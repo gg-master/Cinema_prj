@@ -111,7 +111,7 @@
           <bool>false</bool>
          </property>
          <property name="frameShape">
-          <enum>QFrame::Box</enum>
+          <enum>QFrame::NoFrame</enum>
          </property>
          <property name="frameShadow">
           <enum>QFrame::Sunken</enum>
@@ -127,8 +127,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>741</width>
-            <height>449</height>
+            <width>745</width>
+            <height>453</height>
            </rect>
           </property>
          </widget>
