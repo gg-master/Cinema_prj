@@ -55,20 +55,6 @@ sys.excepthook = my_exception_hook
 '''
 
 
-class WindowArr(list):
-    def __init__(self):
-        super().__init__()
-        self.dct = {}
-        self.list = list()
-
-    def append(self, object):
-        print(object.__class__.__name__)
-        self.list.append(object)
-
-    def __getitem__(self, item):
-        return self.list[item]
-
-
 class MyQWidget(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1067,7 +1053,7 @@ class MovieSplashScreen(QSplashScreen):
 #
 
 if __name__ == "__main__":
-    window_arr = WindowArr()
+    window_arr = []
     if not with_wind_load:
             app = QApplication(sys.argv)
             ex = MainWindow()
