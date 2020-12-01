@@ -11,6 +11,7 @@ import QRcode
 import time
 
 # Settings
+with_wind_load = True
 base_path_for_none_img = r'system_image\none_img.jpg'
 path_for_system_img = 'system_image\\'
 relative_path_for_media = 'films_image\\'
@@ -424,21 +425,27 @@ class CardOfFilm(MyQWidget):
 class BuyTct(MyQWidget):
     """Форма покупки билетов"""
     def __init__(self, id, title, parent=None):
-        super().__init__(parent)
+        super().__init__()
         window_arr.append(self)
         uic.loadUi(path_for_gui + 'buy_tck.ui', self)
-        self.cancel.clicked.connect(self.close_act)
+        self.cancel.clicked.connect(self.close)
         self.accept.clicked.connect(self.accept_action)
 
-        self.cinemas.activated.connect(self.load_time)
+        self.cinemas_2.activated.connect(self.load_time)
         self.times.activated.connect(self.load_other)
 
         self.choose_place_btn.clicked.connect(self.choose_seat)
 
         self.film_id = id
         self.film_title = title
+        self.counter_places = 0
+        self.path_for_tct = None
+        self.isAccepted = False
 
         self.load_cinemas()
+
+    def set_path(self, path):
+        self.path_for_tct = path
 
     def choose_seat(self):
         """Открывает окно для выбора мест
@@ -453,6 +460,11 @@ class BuyTct(MyQWidget):
         !!!! Весь выше описанный функционал
         реализован частично как в этом классе,
         так и в классе формы в которой выбираются сами места"""
+
+        # Проверка выбрано время или нет
+        if self.times.currentText() == 'Выбрать':
+            self.statusBar.setText('Выберите время')
+            return
         try:
             cs = ChooseSeat(self.places, self)
             # Если кнопка подтверждения заказа активка и
@@ -562,7 +574,7 @@ class BuyTct(MyQWidget):
         """Загружаются оставшиеся данные в соответствии с
         выбранным кинотеатром и временем"""
         cur = conn.cursor()
-        name_c = self.cinemas.currentText()
+        name_c = self.cinemas_2.currentText()
         self.time_s = self.times.currentText()
 
         rez_c = cur.execute("""SELECT * from cinemas 
@@ -588,7 +600,7 @@ class BuyTct(MyQWidget):
         """Загрузка доступного времени в
         соответствии с выбранным кинотетром из базы"""
         cur = conn.cursor()
-        name_c = self.cinemas.currentText()
+        name_c = self.cinemas_2.currentText()
 
         # Загрузка информации о кинотетре
         rez_c = cur.execute("""SELECT * from cinemas 
@@ -597,6 +609,7 @@ class BuyTct(MyQWidget):
 
         self.adress.setText(rez_c[2])
         self.phone.setText(rez_c[3])
+        self.time_to.setText('---------')
 
         # Загрузка времени
         id_c = rez_c[0]
@@ -620,13 +633,27 @@ class BuyTct(MyQWidget):
             id, name = i[:2]
             self.dct_cinema[id] = name
         rez = list(self.dct_cinema.values())
-        self.cinemas.addItems(rez)
+        self.cinemas_2.addItems(rez)
 
-    def close_act(self):
-        self.close()
+    def closeEvent(self, a0: QCloseEvent):
+        # if self.isAccepted:
+        #     if self.counter_places != len(self.numb):
+        #         if self.path_for_tct is not None:
+        #             for i in range(self.counter_places, len(self.numb)):
+        #                 self.counter_places += 1
+        #                 place = self.numb[i] + 1
+        #                 Ticket(self, place, btn_for_auto_save=True)
+        #             print('Билеты сохранены')
+        super().closeEvent(a0)
 
     def accept_action(self):
+        """Метод, который вызывается при нажатии кнопки "Подтвердить"
+        Обновляется строчка с порядком сиденей а также для каждого билета
+        появляется окно с информацией о месте, времени и тд
+        Кроме этого окно нельзя будет закрыть пока пользователь не нажмет на
+        кнопку "Сохранить" и не выберет путь для сохранения билета"""
         cur = conn.cursor()
+        self.isAccepted = True
         for i in self.numb:
             self.places[i] = '1'
         s = f'{", ".join(self.places)}'
@@ -636,9 +663,12 @@ class BuyTct(MyQWidget):
                         WHERE id = ?''', (req, self.id_films_in_c))
         conn.commit()
         for i in range(len(self.numb)):
+            self.counter_places += 1
             place = self.numb[i] + 1
             self.ticket = Ticket(self, place)
             self.ticket.show()
+        # После сохранения всех билетов отключается
+        # возможность повторного подтверждения заказа и выбора места
         self.statusBar.setText("Билеты сохранены. Ждем вас на сеансе")
         self.accept.setEnabled(False)
         self.choose_place_btn.setEnabled(False)
@@ -646,12 +676,16 @@ class BuyTct(MyQWidget):
 
 
 class Ticket(MyQWidget):
-    def __init__(self, parent, place):
+    """Класс билета. Показывает билет, кнопку для
+    выбора пути сохранения и созраняет билет по выбранному пути"""
+    def __init__(self, parent, place, btn_for_auto_save=False):
         super().__init__()
+        self.parent = parent
         window_arr.append(self)
         uic.loadUi(path_for_gui + 'successful_purchase.ui', self)
         self.pushButton.clicked.connect(self.choose_way)
 
+        # Разметка
         self.pixmap = QPixmap(path_for_system_img + 'ticket.jpg')
         qp = QPainter()
         qp.begin(self.pixmap)
@@ -673,7 +707,7 @@ class Ticket(MyQWidget):
         qp.end()
 
         # 321 175
-        self.BtnIsClicked = False
+        self.BtnIsClicked = btn_for_auto_save
         self.label.setPixmap(self.pixmap)
 
     def make_qrcode(self):
@@ -684,6 +718,8 @@ class Ticket(MyQWidget):
         return qrcode.make(text, image_factory=QRcode.Image).pixmap()
 
     def save_tct(self):
+        # Если кнопка была нажата и выбран корректный путь,
+        # то выполняем сохранение
         global tickets_numb
         if self.BtnIsClicked:
             self.render(self.pixmap)
@@ -691,6 +727,7 @@ class Ticket(MyQWidget):
             tickets_numb += 1
 
     def choose_way(self):
+        # Диалог выбора пути
         from PyQt5.QtWidgets import QFileDialog
         self.way = QFileDialog.getExistingDirectory()
         if self.way:
@@ -700,15 +737,19 @@ class Ticket(MyQWidget):
 
     def closeEvent(self, a0: QCloseEvent):
         if self.BtnIsClicked:
-            self.close()
-            del window_arr[-1]
+            self.parent.set_path(self.way)
+            super().closeEvent(a0)
         else:
             a0.ignore()
             self.statusBar.setText('Выберите путь для сохранения')
 
 
 class MyPushButton(QPushButton):
+    """Модифицированная кнопка, которая меняет цвет в
+    зависимости забранированно место или нет
 
+    Также реагирует как на нажатие левой кнопкой мыши,
+    так и на нажатие правой кнопкой мыши"""
     def __init__(self, *args):
         super().__init__(*args)
         self.isSelected = False
@@ -726,6 +767,7 @@ class MyPushButton(QPushButton):
 
 
 class ChooseSeat(MyQDialog):
+    """Диалог который предлагает пользователю выбрать места"""
     def __init__(self, places, parent=None):
         super().__init__(parent)
         window_arr.append(self)
@@ -746,7 +788,9 @@ class ChooseSeat(MyQDialog):
     def setupUi(self):
         """Происходит загрузка интерфейса посредством циклического
         заполнения кнопок в зависимости от количества месте в базе
-        планировалось 3-5-7-9-11 и тд количество мест
+
+        UPD: окзалось, что можно выбрать любое количество мест,
+        разве лишь будет немного изменен внешний вид при просомтре мест
 
         Реализовал через преобразование pyuic так как сначала прикинул нужный
         мне дизайн и потом отформатировал под свои задачи"""
@@ -831,6 +875,7 @@ class ChooseSeat(MyQDialog):
         QtCore.QMetaObject.connectSlotsByName(self)
 
     def set_selected_btn(self, num_of_choose_btn, isSelected):
+        """При повторном октрытии диалога загружаются ранее выбранные места"""
         self.isSelected = isSelected
         btn_arr = self.bG.buttons()
         btns = []
@@ -843,6 +888,8 @@ class ChooseSeat(MyQDialog):
         self.last_num_of_choose_btn = btns
 
     def c_action(self):
+        # при закрытии окна узнаем какие кнопки были выбраны и
+        # сохраняем их в список
         buttons = self.bG.buttons()
         for btn in buttons:
             if btn.isSelected:
@@ -850,6 +897,8 @@ class ChooseSeat(MyQDialog):
         self.close()
 
     def set_default_places(self):
+        # при закрытии окна с помощью кнопки "отмена"
+        # восстанавливаются ранее выбранные кнопки
         if self.isSelected:
             self.numb_of_choose_btn = self.last_num_of_choose_btn
         self.close()
@@ -860,6 +909,8 @@ class ChooseSeat(MyQDialog):
 
 
 class TrailerWidget(MyQWidget):
+    """Виджет, который показывает окно с трейлером
+    В данный момент работает только если видео-файл находится на устройстве"""
     def __init__(self, parent, url, title):
         super().__init__()
         window_arr.append(self)
@@ -868,6 +919,7 @@ class TrailerWidget(MyQWidget):
         self.url = url
         self.setWindowTitle(title)
 
+        # Попытки загружать через ссылки
         # playlist = QMediaPlaylist()
         # playlist.addMedia(QUrl("http://example.com/movie1.mp4"))
         #
@@ -895,11 +947,11 @@ class TrailerWidget(MyQWidget):
 
     def closeEvent(self, a0: QCloseEvent):
         self.player.stop()
-        self.close()
-        del window_arr[-1]
+        super().closeEvent(a0)
 
 
 class FilterDialog(MyQDialog):
+    """Окно, которое отвечает за работу фильтра"""
     def __init__(self, parent=None):
         super().__init__(parent)
         uic.loadUi(path_for_gui + 'filter.ui', self)
@@ -971,6 +1023,7 @@ class AdminSignIn(MyQDialog):
 
 
 class MovieSplashScreen(QSplashScreen):
+    """Реализовано для работы экрана загрузки"""
     def __init__(self, movie, parent=None):
         movie.jumpToFrame(0)
         pixmap = QPixmap(movie.frameRect().size())
@@ -996,29 +1049,32 @@ class MovieSplashScreen(QSplashScreen):
 
 
 # if __name__ == '__main__':
-#     window_arr = []
-#     app = QApplication(sys.argv)
-#     ex = MainWindow()
-#     ex.show()
-#     sys.exit(app.exec())
-
+#
 
 if __name__ == "__main__":
     window_arr = []
-    app = QApplication(sys.argv)
-    movie = QMovie(path_for_system_img + "load_v1.gif")
-    splash = MovieSplashScreen(movie)
-    splash.show()
-    start = time.time()
+    if not with_wind_load:
+            app = QApplication(sys.argv)
+            ex = MainWindow()
+            ex.show()
+            sys.exit(app.exec())
+    else:
+        app = QApplication(sys.argv)
+        movie = QMovie(path_for_system_img + "load_v1.gif")
+        splash = MovieSplashScreen(movie)
+        splash.show()
+        start = time.time()
 
-    while movie.state() == QMovie.Running and time.time() < start + 4:
-        app.processEvents()
+        while movie.state() == QMovie.Running and time.time() < start + 4:
+            app.processEvents()
 
-    window = MainWindow()
-    window.show()
-    splash.finish(window)
-    sys.exit(app.exec_())
+        window = MainWindow()
+        window.show()
+        splash.finish(window)
+        sys.exit(app.exec_())
 
+
+"""Экран загрузки с использование статичной картинки"""
 # if __name__ == '__main__':
 #     import time
 #     app = QApplication(sys.argv)
