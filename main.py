@@ -55,6 +55,46 @@ sys.excepthook = my_exception_hook
 '''
 
 
+class WindowArr(list):
+    def __init__(self):
+        super().__init__()
+        self.dct = {}
+        self.list = list()
+
+    def setActive(self, el):
+        # TODO
+        window_arr[-1].setWindowState(Qt.WindowActive)
+        window_arr[-1].activateWindow()
+
+    def check(self, window):
+        if self.list[-1] != window:
+            return True
+        return False
+
+    def append(self, objects):
+        h = hash(objects)
+        if h not in self.dct:
+            self.dct[h] = [object]
+        else:
+            self.dct[h].append(object)
+        # print(self.dct, 'add')
+        self.list.append(objects)
+
+    def __getitem__(self, item):
+        return self.list[item]
+
+    def __delitem__(self, key):
+        item = self.list[key]
+        h = hash(item)
+        # print(self.dct)
+        if self.dct[h]:
+            del self.dct[h][-1]
+        if not self.dct[h]:
+            del self.dct[h]
+        # print(self.dct, 'del')
+        del self.list[key]
+
+
 class MyQWidget(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -67,12 +107,15 @@ class MyQWidget(QWidget):
     #         i = window_arr[-1]
 
     def closeEvent(self, a0: QCloseEvent):
-        if window_arr[-1] != self:
+        if window_arr.check(self):
+            window_arr.setActive(self)
             a0.ignore()
-            window_arr[-1].activateWindow()
         else:
             window_arr[-1].close()
             del window_arr[-1]
+
+    def __hash__(self):
+        return hash(self.parent)
 
 
 class MyQDialog(QDialog):
@@ -87,12 +130,15 @@ class MyQDialog(QDialog):
     #         i = window_arr[-1]
 
     def closeEvent(self, a0: QCloseEvent):
-        if window_arr[-1] != self:
+        if window_arr.check(self):
+            window_arr.setActive(self)
             a0.ignore()
-            window_arr[-1].activateWindow()
         else:
             window_arr[-1].close()
             del window_arr[-1]
+
+    def __hash__(self):
+        return hash(self.parent)
 
 
 class MyPopup(QWidget):
@@ -242,7 +288,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
                 name = name.strip('\n')
                 producer.append(name)
 
-        self.filt = FilterDialog()
+        self.filt = FilterDialog(self)
         self.filt.reload_ui(years, genre, rating, producer)
 
     def create_request_for_filter(self):
@@ -272,6 +318,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
     def closeEvent(self, a0: QCloseEvent):
         if window_arr[-1] != self:
             a0.ignore()
+            window_arr[-1].setWindowState(Qt.WindowActive)
             window_arr[-1].activateWindow()
         else:
             window_arr[-1].close()
@@ -284,6 +331,8 @@ class CardOfFilm(MyQWidget):
     """
     def __init__(self, parent, id_film):
         super().__init__()
+        self.id = id_film
+
         window_arr.append(self)
         self.parent = parent
         uic.loadUi(path_for_gui + 'card_of_film.ui', self)
@@ -294,7 +343,6 @@ class CardOfFilm(MyQWidget):
         self.poster.installEventFilter(self)
         self.poster_2.installEventFilter(self)
 
-        self.id = id_film
         self.load_info()
 
     def eventFilter(self, obj, event):
@@ -321,7 +369,7 @@ class CardOfFilm(MyQWidget):
 
     def buy_ticket(self):
         """Функция, которая открывает окно для покупки билетов"""
-        self.bt = BuyTct(self.id, self.title)
+        self.bt = BuyTct(self, self.id, self.title)
         self.bt.show()
 
     def load_info(self):
@@ -422,11 +470,15 @@ class CardOfFilm(MyQWidget):
         else:
             self.statusBar.setText('Трейлер не найден')
 
+    def __hash__(self):
+        return hash(int(self.id))
+
 
 class BuyTct(MyQWidget):
     """Форма покупки билетов"""
-    def __init__(self, id, title, parent=None):
+    def __init__(self, parent, id, title):
         super().__init__()
+        self.parent = parent
         window_arr.append(self)
         uic.loadUi(path_for_gui + 'buy_tck.ui', self)
         self.cancel.clicked.connect(self.close)
@@ -467,7 +519,7 @@ class BuyTct(MyQWidget):
             self.statusBar.setText('Выберите время')
             return
         try:
-            cs = ChooseSeat(self.places, self)
+            cs = ChooseSeat(self, self.places)
             # Если кнопка подтверждения заказа активка и
             # места прежде уже выбраны, то в созданную форму
             # добавляются прежде выбранные места
@@ -674,6 +726,9 @@ class BuyTct(MyQWidget):
         self.accept.setEnabled(False)
         self.choose_place_btn.setEnabled(False)
         self.cancel.setEnabled(False)
+    #
+    # def __hash__(self):
+    #     return hash(self.parent)
 
 
 class Ticket(MyQWidget):
@@ -769,8 +824,9 @@ class MyPushButton(QPushButton):
 
 class ChooseSeat(MyQDialog):
     """Диалог который предлагает пользователю выбрать места"""
-    def __init__(self, places, parent=None):
+    def __init__(self, parent, places):
         super().__init__(parent)
+        self.parent = parent
         window_arr.append(self)
         self.places = places
 
@@ -914,8 +970,8 @@ class TrailerWidget(MyQWidget):
     В данный момент работает только если видео-файл находится на устройстве"""
     def __init__(self, parent, url, title):
         super().__init__()
-        window_arr.append(self)
         self.parent = parent
+        window_arr.append(self)
         self.ui = uic.loadUi(path_for_gui + "trailer.ui", self)
         self.url = url
         self.setWindowTitle(title)
@@ -953,7 +1009,8 @@ class TrailerWidget(MyQWidget):
 
 class FilterDialog(MyQDialog):
     """Окно, которое отвечает за работу фильтра"""
-    def __init__(self, parent=None):
+    def __init__(self, parent):
+        self.parent = parent
         super().__init__(parent)
         uic.loadUi(path_for_gui + 'filter.ui', self)
         self.setWindowTitle('Настройки сортировки')
@@ -1003,6 +1060,7 @@ class FilterDialog(MyQDialog):
 class AdminSignIn(MyQDialog):
     def __init__(self, parent):
         super().__init__(parent)
+        self.parent = parent
         window_arr.append(self)
         uic.loadUi(path_for_gui + 'admin_sign_in.ui', self)
         self.pushButton.clicked.connect(self.acept_data)
@@ -1053,7 +1111,7 @@ class MovieSplashScreen(QSplashScreen):
 #
 
 if __name__ == "__main__":
-    window_arr = []
+    window_arr = WindowArr()
     if not with_wind_load:
             app = QApplication(sys.argv)
             ex = MainWindow()
