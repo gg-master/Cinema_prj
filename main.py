@@ -55,30 +55,47 @@ sys.excepthook = my_exception_hook
 '''
 
 
+class WindowError(Exception):
+    pass
+
+
 class WindowArr(list):
     def __init__(self):
         super().__init__()
         self.dct = {}
         self.list = list()
 
-    def setActive(self, el):
-        # TODO
-        window_arr[-1].setWindowState(Qt.WindowActive)
-        window_arr[-1].activateWindow()
+    def setActive(self, el, op_el_list=True):
+        # numb_el = self.list.index(el)
+        # for wind in self.list[numb_el:]:
+        #     wind.setWindowState(Qt.WindowActive)
+        #     wind.activateWindow()
+        if op_el_list:
+            self.list[-1].setWindowState(Qt.WindowActive)
+            self.list[-1].activateWindow()
+        else:
+            el.setWindowState(Qt.WindowActive)
+            el.activateWindow()
 
-    def check(self, window):
-        if self.list[-1] != window:
+    def check(self, wind):
+        if self.list[-1] != wind:
             return True
         return False
 
-    def append(self, objects):
-        h = hash(objects)
+    def append(self, obj):
+        h = hash(obj)
         if h not in self.dct:
-            self.dct[h] = [object]
+            self.dct[h] = [obj]
+        elif h in self.dct and obj.__class__.__name__ in \
+                list(map(lambda x: x.__class__.__name__, self.dct[h])):
+            print(obj, h)
+            for el in self.dct[h]:
+                self.setActive(el, False)
+            raise WindowError
         else:
-            self.dct[h].append(object)
+            self.dct[h].append(obj)
         # print(self.dct, 'add')
-        self.list.append(objects)
+        self.list.append(obj)
 
     def __getitem__(self, item):
         return self.list[item]
@@ -142,7 +159,7 @@ class MyQDialog(QDialog):
 
 
 class MyPopup(QWidget):
-    """Выслывающее окно для увеличенного просомтра ищображений."""
+    """Выслывающее окно для увеличенного просомтра изображений."""
     def __init__(self, parent, pixmap_path):
         super().__init__()
         self.label = QLabel(self)
@@ -247,15 +264,22 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
         return w
 
     def open_card(self):
-        self.card = CardOfFilm(self, self.sender().id)
-        self.card.show()
+        try:
+            self.card = CardOfFilm(self, self.sender().id)
+            self.card.show()
+        except WindowError:
+            pass
 
     def filter_wind_open(self):
-        self.filt.show()
-        # Добавление в список для реализации закрытия окон
-        window_arr.append(self.filt)
-        self.filt.exec_()
-        self.load_films()
+        try:
+            window_arr.append(self.filt)
+            self.filt.show()
+            # Добавление в список для реализации закрытия окон
+
+            self.filt.exec_()
+            self.load_films()
+        except WindowError:
+            pass
 
     def filter_load(self):
         """
@@ -312,14 +336,16 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
             print(ex)
 
     def admin_sign_in(self):
-        self.aW = AdminSignIn(self)
-        self.aW.show()
+        try:
+            self.aW = AdminSignIn(self)
+            self.aW.show()
+        except WindowError:
+            pass
 
     def closeEvent(self, a0: QCloseEvent):
-        if window_arr[-1] != self:
+        if window_arr.check(self):
             a0.ignore()
-            window_arr[-1].setWindowState(Qt.WindowActive)
-            window_arr[-1].activateWindow()
+            window_arr.setActive(self)
         else:
             window_arr[-1].close()
             del window_arr[-1]
@@ -330,9 +356,8 @@ class CardOfFilm(MyQWidget):
     Представляет просмотр информации о фильме и возможности покупки билета
     """
     def __init__(self, parent, id_film):
-        super().__init__()
         self.id = id_film
-
+        super().__init__()
         window_arr.append(self)
         self.parent = parent
         uic.loadUi(path_for_gui + 'card_of_film.ui', self)
@@ -369,8 +394,12 @@ class CardOfFilm(MyQWidget):
 
     def buy_ticket(self):
         """Функция, которая открывает окно для покупки билетов"""
-        self.bt = BuyTct(self, self.id, self.title)
-        self.bt.show()
+        try:
+            bt = BuyTct(self, self.id, self.title)
+            bt.show()
+            bt.exec_()
+        except WindowError:
+            pass
 
     def load_info(self):
         """Загрузка основной информации в оставшиеся label в gui"""
@@ -464,22 +493,27 @@ class CardOfFilm(MyQWidget):
         В будущем есть идея ввести открытие видео-файла по ссылке,
         чтобы не хранить видео-файл на устройстве"""
         # TODO попробовать реализовать открытие видео по ссылке
-        if self.trailer is not None and os.path.isfile(self.trailer):
-            self.vid = TrailerWidget(self, self.trailer, self.title)
-            self.vid.show()
-        else:
-            self.statusBar.setText('Трейлер не найден')
+        try:
+            if self.trailer is not None and os.path.isfile(self.trailer):
+                self.vid = TrailerWidget(self, self.trailer, self.title)
+                self.vid.show()
+            else:
+                self.statusBar.setText('Трейлер не найден')
+        except:
+            pass
 
     def __hash__(self):
         return hash(int(self.id))
 
 
-class BuyTct(MyQWidget):
+class BuyTct(MyQDialog):
     """Форма покупки билетов"""
     def __init__(self, parent, id, title):
-        super().__init__()
+        super().__init__(parent)
         self.parent = parent
         window_arr.append(self)
+
+        self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
         uic.loadUi(path_for_gui + 'buy_tck.ui', self)
         self.cancel.clicked.connect(self.close)
         self.accept.clicked.connect(self.accept_action)
@@ -542,6 +576,8 @@ class BuyTct(MyQWidget):
                 # выводим предупредительное сообщение
                 self.statusBar.setText('Место не выбрано')
                 self.accept.setEnabled(False)
+        except WindowError:
+            pass
         except Exception:
             """Исключение введено для предотвращения конфликта, 
             когда не выбран кинотеатр и время"""
@@ -718,8 +754,11 @@ class BuyTct(MyQWidget):
         for i in range(len(self.numb)):
             self.counter_places += 1
             place = self.numb[i] + 1
-            self.ticket = Ticket(self, place)
-            self.ticket.show()
+            try:
+                self.ticket = Ticket(self, place)
+                self.ticket.show()
+            except WindowError:
+                pass
         # После сохранения всех билетов отключается
         # возможность повторного подтверждения заказа и выбора места
         self.statusBar.setText("Билеты сохранены. Ждем вас на сеансе")
@@ -738,6 +777,7 @@ class Ticket(MyQWidget):
         super().__init__()
         self.parent = parent
         window_arr.append(self)
+
         uic.loadUi(path_for_gui + 'successful_purchase.ui', self)
         self.pushButton.clicked.connect(self.choose_way)
 
@@ -1014,6 +1054,7 @@ class FilterDialog(MyQDialog):
         super().__init__(parent)
         uic.loadUi(path_for_gui + 'filter.ui', self)
         self.setWindowTitle('Настройки сортировки')
+        self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
         self.buttonBox.accepted.connect(self.acept_data)
         self.buttonBox.rejected.connect(self.reject_data)
         self.a = {'year': [False, ''],
@@ -1064,6 +1105,7 @@ class AdminSignIn(MyQDialog):
         window_arr.append(self)
         uic.loadUi(path_for_gui + 'admin_sign_in.ui', self)
         self.pushButton.clicked.connect(self.acept_data)
+        self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
         self.Form = parent
 
     def acept_data(self):
