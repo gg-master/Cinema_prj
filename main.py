@@ -185,7 +185,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
         super().__init__(parent)
         window_arr.append(self)
         self.setStyleSheet(open("styles/main_wind.css", "r").read())
-        uic.loadUi(path_for_gui + "main_window.ui", self)
+        uic.loadUi(path_for_gui + "main_window_w.ui", self)
 
         # Установка минимальных размеров окна
         self.setMinimumWidth(wdw + 30 * (col_in_mainWindow + 1))
@@ -360,6 +360,7 @@ class CardOfFilm(MyQWidget):
         super().__init__()
         window_arr.append(self)
         self.parent = parent
+        self.setStyleSheet(open("styles/film_card.css", "r").read())
         uic.loadUi(path_for_gui + 'card_of_film.ui', self)
 
         self.setWindowTitle('Карточка фильма')

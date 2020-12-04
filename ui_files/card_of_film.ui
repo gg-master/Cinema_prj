@@ -432,7 +432,7 @@
          </property>
          <property name="icon">
           <iconset>
-           <normaloff>../system_image/play_btn.bmp</normaloff>../system_image/play_btn.bmp</iconset>
+           <normaloff>../system_image/play_btn_r.bmp</normaloff>../system_image/play_btn_r.bmp</iconset>
          </property>
          <property name="iconSize">
           <size>

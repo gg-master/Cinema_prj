@@ -1,6 +1,7 @@
 /*noinspection ALL*/
 QWidget{
-    background-color: rgb(229, 224, 238);
+    /*background-color: rgb(229, 224, 238);*/
+    background-color: hsl(200, 21%, 92%);
     /*background-color: rgb(238, 242, 255);*/
     border-radius: 10px;
 }
@@ -10,13 +11,13 @@ QPushButton {
     border-color: black;
     border-radius: 8px;
     color: rgb(255, 255, 255);
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                      stop: 0 #0067C5, stop: 1 #027be3);
+    /*background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,*/
+                                      /*stop: 0 #0067C5, stop: 1 #027be3);*/
+    background-color: #95a4ac
     /*min-width: 80px;*/
 }
 
 /*noinspection ALL*/
 QPushButton:pressed {
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                      stop: 0 #027be3, stop: 1 #0067C5);
+    background-color:  #748892;
 }
