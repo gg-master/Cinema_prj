@@ -56,45 +56,70 @@ sys.excepthook = my_exception_hook
 
 
 class WindowArr(list):
+    """Для корректной реализации системы закрытия окон реализован класс,
+    наследующийся от списка и выполняющий проверки с окнами при их открытии  и закрытии"""
     def __init__(self):
         super().__init__()
+        """Словарь используется для кранения 
+        открытых окон и детей в этих окнах"""
         self.dct = {}
+        """Список необходим для хранения все отрытых окон"""
         self.list = list()
+        """В этот список добавляется окно, 
+        которое необходимо закрыти при открытии"""
         self.list_when_show_del = []
 
     def setActive(self, el, op_el_list=True):
+        """метод, который активирует окна в списке отрытых окон
+        или же октивирует все октрытые окна в каком то
+        отдельном окне(для этого и используется словарь)"""
         if op_el_list:
             for i in self.list:
-                i.setWindowState(Qt.WindowActive)
-                i.activateWindow()
+                for j in self.dct[hash(i)]:
+                    j.setWindowState(Qt.WindowActive)
+                    j.activateWindow()
         else:
+            """хэшем используется для понимания к 
+            какому главному окносится то или иное дочернее окно"""
             h = hash(el)
             for item in self.dct[h]:
                 item.setWindowState(Qt.WindowActive)
                 item.activateWindow()
 
     def check_for_main_w(self, item):
+        """Метод, который проверяет отрыти ли окна в
+        самом окне или же открыты ли другие окна
+        (в нашем случае карточки фильмов)"""
         if self.dct[hash(item)][-1] != item:
+            """Если открыты внутренние окна, такие 
+            как диалог с нстройкой фильтра
+            , то при закрытии окна показываем 
+            все открытые дочерние окна в этом окне"""
             self.setActive(item, False)
             return True
         elif self.list:
+            """Если есть элементы в списке, то открываем их последовательно"""
             self.setActive(item)
             return True
         return False
 
     def check_window(self, wind):
+        """Проверяем является ли окно последним в списке
+        октрытых окон (НЕ У ГЛАВНОГО)"""
         h = hash(wind)
         if self.dct[h][-1] == wind:
             return False
         return True
 
     def check_wind_in_list(self, wind):
+        """Если окно в списке для удаления -> удаляем"""
         if wind in self.list_when_show_del:
             del self.list_when_show_del[self.list_when_show_del.index(wind)]
             return True
         return False
 
     def append(self, obj):
+        """Напишите в лс"""
         h = hash(obj)
         if h not in self.dct:
             self.dct[h] = [obj]

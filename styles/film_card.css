@@ -1,23 +1,23 @@
 /*noinspection ALL*/
-/*!*QPushButton{*!*/
-    /*!*background-color: hsl(201, 32%, 44%);*!*/
-    /*!*border-radius: 4px;*!*/
-    /*!*color: white;*!*/
-    /*!*height: 20%;*!*/
-/*!*}*!*/
-/*!*noinspection ALL*!*/
-/*QPushButton:pressed{*/
-    /*background-color: hsl(199, 27%, 42%);*/
-/*}*/
-/*!*noinspection ALL*!*/
-/*QPushButton#playBtn{*/
-    /*width: 180%;*/
-    /*icon: url("system_image/play_btn_r.bmp");*/
-/*}*/
-/*!*noinspection ALL*!*/
-/*QPushButton#playBtn:pressed{*/
-    /*icon: url("system_image/play_btn_r_real.bmp");*/
-/*}*/
-/*QPushButton#buy_ticket_btn{*/
-    /*width: 150%;*/
-/*}*/
+QPushButton#buy_ticket_btn, QPushButton#playBtn{
+    background-color: hsl(201, 32%, 44%);
+    border-radius: 4px;
+    color: white;
+    height: 20%;
+}
+/*noinspection ALL*/
+QPushButton#buy_ticket_btn:pressed, QPushButton#playBtn:pressed{
+    background-color: hsl(199, 27%, 42%);
+}
+/*noinspection ALL*/
+QPushButton#playBtn{
+    width: 180%;
+    icon: url("system_image/play_btn_r.bmp");
+}
+/*noinspection ALL*/
+QPushButton#playBtn:pressed{
+    icon: url("system_image/play_btn_r_real.bmp");
+}
+QPushButton#buy_ticket_btn{
+    width: 150%;
+}
