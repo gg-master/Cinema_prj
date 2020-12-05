@@ -1,7 +1,7 @@
 /*noinspection ALL*/
 QPushButton#buy_ticket_btn, QPushButton#playBtn{
     background-color: hsl(201, 32%, 44%);
-    border-radius: 4px;
+    border-radius: 10px;
     color: white;
     height: 20%;
 }
@@ -21,3 +21,4 @@ QPushButton#playBtn:pressed{
 QPushButton#buy_ticket_btn{
     width: 150%;
 }
+/*some_text*/
