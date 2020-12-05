@@ -22,77 +22,124 @@ class BtnWid(QPushButton):
 
 class Ui_Form(object):
     def setupUi(self, Form, id, title, rating, genre,
-                                            year, images, rect=None):
+                                            year, images):
 
-        self.layoutWidget = QtWidgets.QWidget(Form)
-
-        # self.layoutWidget.setStyleSheet(
-        #     "background-color: rgb(228, 225, 229);")
-
-        self.layoutWidget.setGeometry(QtCore.QRect(0, 0, 191, 341))
-        # self.layoutWidget.setMaximumWidth(193)
-        # self.layoutWidget.setMaximumHeight(346)
-
-        self.layoutWidget.setMinimumSize(QtCore.QSize(193, 346))
-
-        self.layoutWidget.setObjectName("layoutWidget")
-        self.verticalLayout = QtWidgets.QVBoxLayout(self.layoutWidget)
-        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.verticalLayout.setObjectName("verticalLayout")
-        self.image_label = QtWidgets.QLabel(self.layoutWidget)
+        self.widget = QtWidgets.QWidget(Form)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred,
+                                           QtWidgets.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(Form.sizePolicy().hasHeightForWidth())
+        self.widget.setSizePolicy(sizePolicy)
+        self.widget.setStyleSheet(open("styles/card.css", "r").read())
+        # self.widget.setStyleSheet(
+        #     "background-color: rgb(235, 240, 255);\n"
+        #     "border-radius: 10px;")
+        #     "background-color: rgb(228, 225, 229);\n"
+        # self.widget.setGeometry(QtCore.QRect(0, 0, 191, 341))
+        # # self.layoutWidget.setMaximumWidth(193)
+        # # self.layoutWidget.setMaximumHeight(346)
+        #
+        # self.widget.setMinimumSize(QtCore.QSize(193, 346))
+        #
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.widget)
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.image_label = QtWidgets.QLabel(Form)
         self.image_label.setAlignment(QtCore.Qt.AlignCenter)
-        self.image_label.setObjectName("image_label_2")
-        self.verticalLayout.addWidget(self.image_label)
-        self.formLayout = QtWidgets.QFormLayout()
-        self.formLayout.setLabelAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
-        self.formLayout.setFormAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
-        self.formLayout.setObjectName("formLayout")
-        self.title = QtWidgets.QLabel(self.layoutWidget)
+        self.image_label.setObjectName("image_label")
+        self.verticalLayout_2.addWidget(self.image_label)
+        self.verticalLayout = QtWidgets.QVBoxLayout()
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.horizontalLayout = QtWidgets.QHBoxLayout()
+        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.title = QtWidgets.QLabel(Form)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum,
+                                           QtWidgets.QSizePolicy.Ignored)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(
+            self.title.sizePolicy().hasHeightForWidth())
+        self.title.setSizePolicy(sizePolicy)
+        self.title.setMinimumSize(QtCore.QSize(60, 0))
+
         font = QtGui.QFont()
         font.setPointSize(10)
+        font.setBold(True)
+        font.setItalic(True)
+        font.setWeight(75)
+        font.setStrikeOut(False)
+        font.setKerning(True)
         self.title.setFont(font)
-        self.title.setObjectName("title_2")
-        self.formLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.title)
-        self.genre = QtWidgets.QLabel(self.layoutWidget)
+        self.title.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.title.setFrameShadow(QtWidgets.QFrame.Plain)
+        self.title.setTextFormat(QtCore.Qt.AutoText)
+        self.title.setScaledContents(True)
+        self.title.setObjectName("title")
+        self.horizontalLayout.addWidget(self.title)
+        spacerItem = QtWidgets.QSpacerItem(40, 20,
+                                           QtWidgets.QSizePolicy.Expanding,
+                                           QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem)
+        self.genre = QtWidgets.QLabel(Form)
         font = QtGui.QFont()
-        font.setPointSize(10)
+        font.setPointSize(8)
         self.genre.setFont(font)
-        self.genre.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.genre.setAlignment(
+            QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
         self.genre.setObjectName("genre")
-        self.formLayout.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.genre)
-        self.rating = QtWidgets.QLabel(self.layoutWidget)
+        self.horizontalLayout.addWidget(self.genre)
+        self.verticalLayout.addLayout(self.horizontalLayout)
+        self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+        self.rating = QtWidgets.QLabel(Form)
         font = QtGui.QFont()
         font.setPointSize(10)
         self.rating.setFont(font)
-        self.rating.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
+        self.rating.setAlignment(
+            QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         self.rating.setObjectName("rating")
-        self.formLayout.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.rating)
-        self.year = QtWidgets.QLabel(self.layoutWidget)
+        self.horizontalLayout_2.addWidget(self.rating)
+        self.year = QtWidgets.QLabel(Form)
         font = QtGui.QFont()
         font.setPointSize(10)
         self.year.setFont(font)
-        self.year.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.year.setAlignment(
+            QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
         self.year.setObjectName("year")
-        self.formLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.year)
-        self.verticalLayout.addLayout(self.formLayout)
-        self.btn = BtnWid(self.layoutWidget, film_id=id)
+        self.horizontalLayout_2.addWidget(self.year)
+        self.verticalLayout.addLayout(self.horizontalLayout_2)
+        self.verticalLayout_2.addLayout(self.verticalLayout)
+
+        self.btn = BtnWid(self.widget, film_id=id)
         self.btn.setMinimumWidth(189)
         self.btn.setMinimumHeight(35)
         self.btn.setObjectName("btn")
+        # self.btn.setStyleSheet("background-color: rgb(116, 125, 255);\n"
+        #                        "border-width:1px;\n"
+        #                        "border-radius: 10px;\n"
+        #                        "border-color: black;\n"
+        #                        "color: rgb(255, 255, 255);\n"
+        #                        "")
+
         self.verticalLayout.addWidget(self.btn)
 
         self.retranslateUi(Form, title, rating, genre,
                                             year, images)
         QtCore.QMetaObject.connectSlotsByName(Form)
-        return self.layoutWidget
+        return self.widget
 
     def retranslateUi(self, Form, title, rating, genre, year, images):
         _translate = QtCore.QCoreApplication.translate
         # Form.setWindowTitle(_translate("Form", "Form"))
-
+        import load_url_img
         pixmap = QPixmap(images[1])
-        if images[0] and os.path.isfile(images[0][0]):
+        if images[0] and images[0][0].startswith('http'):
+            pixmap = load_url_img.load_image_from_url(images[0][0])
+        elif images[0] and images[0][0] and os.path.isfile(images[0][0]):
             pixmap = QPixmap(images[0][0])
+        elif images[0] and len(images[0]) > 1 and \
+                images[0][1] and os.path.isfile(images[0][1]):
+            pixmap = QPixmap(images[0][1])
 
         # win_w, win_h = Form.width(), Form.height()
         # win_w, win_h = self.layoutWidget.width(), self.layoutWidget.height()
@@ -104,8 +151,9 @@ class Ui_Form(object):
                                                  Qt.KeepAspectRatio))
 
         self.title.setText(_translate("Form", title))
-        self.title.setWordWrap(True)
+        # self.title.setWordWrap(True)
         self.genre.setText(_translate("Form", genre))
+        self.genre.setWordWrap(True)
         self.rating.setText(_translate("Form", str(rating)))
         self.year.setText(_translate("Form", str(year)))
         self.btn.setText(_translate("Form", "Открыть карточку"))

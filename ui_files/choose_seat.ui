@@ -13,6 +13,15 @@
   <property name="windowTitle">
    <string>Выбор места</string>
   </property>
+  <property name="toolTip">
+   <string/>
+  </property>
+  <property name="toolTipDuration">
+   <number>10</number>
+  </property>
+  <property name="whatsThis">
+   <string>looooooooooooool</string>
+  </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
     <layout class="QVBoxLayout" name="verticalLayout">
