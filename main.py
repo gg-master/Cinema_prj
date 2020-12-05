@@ -63,21 +63,30 @@ class WindowArr(list):
         self.list_when_show_del = []
 
     def setActive(self, el, op_el_list=True):
-        # numb_el = self.list.index(el)
-        # for wind in self.list[numb_el:]:
-        #     wind.setWindowState(Qt.WindowActive)
-        #     wind.activateWindow()
         if op_el_list:
-            self.list[-1].setWindowState(Qt.WindowActive)
-            self.list[-1].activateWindow()
+            for i in self.list:
+                i.setWindowState(Qt.WindowActive)
+                i.activateWindow()
         else:
-            el.setWindowState(Qt.WindowActive)
-            el.activateWindow()
+            h = hash(el)
+            for item in self.dct[h]:
+                item.setWindowState(Qt.WindowActive)
+                item.activateWindow()
 
-    def check(self, wind):
-        if self.list[-1] != wind:
+    def check_for_main_w(self, item):
+        if self.dct[hash(item)][-1] != item:
+            self.setActive(item, False)
+            return True
+        elif self.list:
+            self.setActive(item)
             return True
         return False
+
+    def check_window(self, wind):
+        h = hash(wind)
+        if self.dct[h][-1] == wind:
+            return False
+        return True
 
     def check_wind_in_list(self, wind):
         if wind in self.list_when_show_del:
@@ -92,55 +101,41 @@ class WindowArr(list):
         elif h in self.dct and obj.__class__.__name__ in \
                 list(map(lambda x: x.__class__.__name__, self.dct[h])):
             # print(obj, h)
-            for el in self.dct[h]:
-                self.setActive(el, False)
+            self.setActive(obj, False)
             self.list_when_show_del.append(obj)
         else:
             self.dct[h].append(obj)
-        # print(self.dct, 'add')
-        if obj.__class__.__name__ == 'CardOfFilm':
-            print('added')
+        if obj.__class__.__name__ == 'CardOfFilm' and \
+                obj not in self.list_when_show_del:
             self.list.append(obj)
 
     def __getitem__(self, item):
         return self.list[item]
 
-    def __delitem__(self, key):
-        item = self.list[key]
+    def del_item(self, item):
         h = hash(item)
-        # print(self.dct)
-        if h in self.dct:
-            if self.dct[h]:
-                del self.dct[h][-1]
-            if not self.dct[h]:
-                del self.dct[h]
-        # print(self.dct, 'del')
-        del self.list[key]
+        if item.__class__.__name__ != 'CardOfFilm':
+            del self.dct[h][-1]
+        else:
+            del self.list[self.list.index(item)]
+            del self.dct[h]
 
 
 class MyQWidget(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    # def closeEvent(self, a0: QCloseEvent):
-    #     i = window_arr[-1]
-    #     while i != self:
-    #         i.close()
-    #         del window_arr[-1]
-    #         i = window_arr[-1]
-
     def closeEvent(self, a0: QCloseEvent):
-        if window_arr.check(self):
-            window_arr.setActive(self)
+        if window_arr.check_window(self):
+            window_arr.setActive(self, False)
             a0.ignore()
         else:
-            window_arr[-1].close()
-            del window_arr[-1]
+            window_arr.del_item(self)
+            super().closeEvent(a0)
 
     def show(self):
         if window_arr.check_wind_in_list(self):
-            # print('success', self)
-            self.close()
+            super().close()
         else:
             super().show()
 
@@ -152,24 +147,16 @@ class MyQDialog(QDialog):
     def __init__(self, *args):
         super().__init__(*args)
 
-    # def closeEvent(self, a0: QCloseEvent):
-    #     i = window_arr[-1]
-    #     while i != self:
-    #         i.close()
-    #         del window_arr[-1]
-    #         i = window_arr[-1]
-
     def closeEvent(self, a0: QCloseEvent):
-        if window_arr.check(self):
-            window_arr.setActive(self)
+        if window_arr.check_window(self):
+            window_arr.setActive(self, False)
             a0.ignore()
         else:
-            window_arr[-1].close()
-            del window_arr[-1]
+            window_arr.del_item(self)
+            super().closeEvent(a0)
 
     def show(self):
         if window_arr.check_wind_in_list(self):
-            print('success', self)
             self.close()
         else:
             super().show()
@@ -202,6 +189,7 @@ class MyPopup(QWidget):
 class MainWindow(QMainWindow, card_widget.Ui_Form):
     """Главное окно"""
     def __init__(self, parent=None):
+        self.id = 0
         super().__init__(parent)
         window_arr.append(self)
         self.setStyleSheet(open("styles/main_wind.css", "r").read())
@@ -352,14 +340,16 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
     def admin_sign_in(self):
         self.aW = AdminSignIn(self)
         self.aW.show()
+        self.aW.exec_()
 
     def closeEvent(self, a0: QCloseEvent):
-        if window_arr.check(self):
+        if window_arr.check_for_main_w(self):
             a0.ignore()
-            window_arr.setActive(self)
         else:
-            window_arr[-1].close()
-            del window_arr[-1]
+            super().closeEvent(a0)
+
+    def __hash__(self):
+        return hash(self.id)
 
 
 class CardOfFilm(MyQWidget):
@@ -409,7 +399,6 @@ class CardOfFilm(MyQWidget):
         bt = BuyTct(self, self.id, self.title)
         bt.show()
         bt.exec_()
-
 
     def load_info(self):
         """Загрузка основной информации в оставшиеся label в gui"""
