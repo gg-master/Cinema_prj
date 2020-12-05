@@ -55,15 +55,12 @@ sys.excepthook = my_exception_hook
 '''
 
 
-class WindowError(Exception):
-    pass
-
-
 class WindowArr(list):
     def __init__(self):
         super().__init__()
         self.dct = {}
         self.list = list()
+        self.list_when_show_del = []
 
     def setActive(self, el, op_el_list=True):
         # numb_el = self.list.index(el)
@@ -82,20 +79,28 @@ class WindowArr(list):
             return True
         return False
 
+    def check_wind_in_list(self, wind):
+        if wind in self.list_when_show_del:
+            del self.list_when_show_del[self.list_when_show_del.index(wind)]
+            return True
+        return False
+
     def append(self, obj):
         h = hash(obj)
         if h not in self.dct:
             self.dct[h] = [obj]
         elif h in self.dct and obj.__class__.__name__ in \
                 list(map(lambda x: x.__class__.__name__, self.dct[h])):
-            print(obj, h)
+            # print(obj, h)
             for el in self.dct[h]:
                 self.setActive(el, False)
-            raise WindowError
+            self.list_when_show_del.append(obj)
         else:
             self.dct[h].append(obj)
         # print(self.dct, 'add')
-        self.list.append(obj)
+        if obj.__class__.__name__ == 'CardOfFilm':
+            print('added')
+            self.list.append(obj)
 
     def __getitem__(self, item):
         return self.list[item]
@@ -104,10 +109,11 @@ class WindowArr(list):
         item = self.list[key]
         h = hash(item)
         # print(self.dct)
-        if self.dct[h]:
-            del self.dct[h][-1]
-        if not self.dct[h]:
-            del self.dct[h]
+        if h in self.dct:
+            if self.dct[h]:
+                del self.dct[h][-1]
+            if not self.dct[h]:
+                del self.dct[h]
         # print(self.dct, 'del')
         del self.list[key]
 
@@ -131,6 +137,13 @@ class MyQWidget(QWidget):
             window_arr[-1].close()
             del window_arr[-1]
 
+    def show(self):
+        if window_arr.check_wind_in_list(self):
+            # print('success', self)
+            self.close()
+        else:
+            super().show()
+
     def __hash__(self):
         return hash(self.parent)
 
@@ -153,6 +166,13 @@ class MyQDialog(QDialog):
         else:
             window_arr[-1].close()
             del window_arr[-1]
+
+    def show(self):
+        if window_arr.check_wind_in_list(self):
+            print('success', self)
+            self.close()
+        else:
+            super().show()
 
     def __hash__(self):
         return hash(self.parent)
@@ -185,7 +205,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
         super().__init__(parent)
         window_arr.append(self)
         self.setStyleSheet(open("styles/main_wind.css", "r").read())
-        uic.loadUi(path_for_gui + "main_window_w.ui", self)
+        uic.loadUi(path_for_gui + "main_window.ui", self)
 
         # Установка минимальных размеров окна
         self.setMinimumWidth(wdw + 30 * (col_in_mainWindow + 1))
@@ -264,22 +284,16 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
         return w
 
     def open_card(self):
-        try:
-            self.card = CardOfFilm(self, self.sender().id)
-            self.card.show()
-        except WindowError:
-            pass
+        self.card = CardOfFilm(self, self.sender().id)
+        self.card.show()
 
     def filter_wind_open(self):
-        try:
-            window_arr.append(self.filt)
-            self.filt.show()
-            # Добавление в список для реализации закрытия окон
+        window_arr.append(self.filt)
+        self.filt.show()
+        # Добавление в список для реализации закрытия окон
 
-            self.filt.exec_()
-            self.load_films()
-        except WindowError:
-            pass
+        self.filt.exec_()
+        self.load_films()
 
     def filter_load(self):
         """
@@ -336,11 +350,8 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
             print(ex)
 
     def admin_sign_in(self):
-        try:
-            self.aW = AdminSignIn(self)
-            self.aW.show()
-        except WindowError:
-            pass
+        self.aW = AdminSignIn(self)
+        self.aW.show()
 
     def closeEvent(self, a0: QCloseEvent):
         if window_arr.check(self):
@@ -395,12 +406,10 @@ class CardOfFilm(MyQWidget):
 
     def buy_ticket(self):
         """Функция, которая открывает окно для покупки билетов"""
-        try:
-            bt = BuyTct(self, self.id, self.title)
-            bt.show()
-            bt.exec_()
-        except WindowError:
-            pass
+        bt = BuyTct(self, self.id, self.title)
+        bt.show()
+        bt.exec_()
+
 
     def load_info(self):
         """Загрузка основной информации в оставшиеся label в gui"""
@@ -577,8 +586,6 @@ class BuyTct(MyQDialog):
                 # выводим предупредительное сообщение
                 self.statusBar.setText('Место не выбрано')
                 self.accept.setEnabled(False)
-        except WindowError:
-            pass
         except Exception:
             """Исключение введено для предотвращения конфликта, 
             когда не выбран кинотеатр и время"""
@@ -755,11 +762,8 @@ class BuyTct(MyQDialog):
         for i in range(len(self.numb)):
             self.counter_places += 1
             place = self.numb[i] + 1
-            try:
-                self.ticket = Ticket(self, place)
-                self.ticket.show()
-            except WindowError:
-                pass
+            self.ticket = Ticket(self, place)
+            self.ticket.show()
         # После сохранения всех билетов отключается
         # возможность повторного подтверждения заказа и выбора места
         self.statusBar.setText("Билеты сохранены. Ждем вас на сеансе")

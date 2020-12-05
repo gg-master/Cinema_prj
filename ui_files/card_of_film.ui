@@ -140,6 +140,9 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="frameShape">
+                <enum>QFrame::NoFrame</enum>
+               </property>
                <property name="widgetResizable">
                 <bool>true</bool>
                </property>
@@ -148,8 +151,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>225</width>
-                  <height>175</height>
+                  <width>229</width>
+                  <height>179</height>
                  </rect>
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_11">
@@ -168,6 +171,9 @@
                    </property>
                    <property name="contextMenuPolicy">
                     <enum>Qt::DefaultContextMenu</enum>
+                   </property>
+                   <property name="frameShadow">
+                    <enum>QFrame::Plain</enum>
                    </property>
                    <property name="text">
                     <string>TextLabel</string>

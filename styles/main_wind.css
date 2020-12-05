@@ -1,31 +1,42 @@
+/*noinspection ALL*/
 QWidget#widget_2{
     /*background-color: rgb(249, 243, 246);*/
     background-color: hsl(201, 57%, 30%);
 }
+/*noinspection ALL*/
 QLineEdit#search{
     background-color: hsl(205, 69%, 19%);
     color: white;
     border-radius: 3px;
     height: 20px;
 }
+/*noinspection ALL*/
 QPushButton#search_btn, QPushButton#sort_btn, QPushButton#admin_btn{
     background-color: hsl(201, 32%, 44%);
     border-radius: 4px;
     color: white;
     height: 20%;
 }
+/*noinspection ALL*/
 QPushButton#search_btn{
     width: 50%;
 }
+/*noinspection ALL*/
 QPushButton#sort_btn{
+    icon: url("system_image/sort_item_r.bmp");
     width: 100%;
 }
+/*noinspection ALL*/
 QPushButton#admin_btn{
     width: 80%;
 }
 /*noinspection ALL*/
 QPushButton#search_btn:pressed, QPushButton#sort_btn:pressed, QPushButton#admin_btn:pressed{
-    background-color: hsl(200, 41%, 36%);
+    background-color: hsl(199, 27%, 42%);
+}
+/*noinspection ALL*/
+QPushButton#sort_btn:pressed{
+    icon: url("system_image/sort_item_r_real.bmp");
 }
 
 
