@@ -1,0 +1,21 @@
+QWidget{
+    background-color: black;
+}
+QPushButton{
+    /*background-color: hsl(195, 80%, 29%);*/
+    background-color: white;
+    height: 30px;
+    border-radius: 5px;
+}
+/*noinspection ALL*/
+QPushButton:pressed{
+    background-color: #989799;
+}
+/*noinspection ALL*/
+QPushButton#pause_btn:pressed{
+    icon: url("system_image/pause_real.bmp")
+}
+/*noinspection ALL*/
+QPushButton#play_btn:pressed{
+    icon: url("system_image/continue_real.bmp")
+}

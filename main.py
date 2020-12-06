@@ -551,6 +551,7 @@ class BuyTct(MyQDialog):
 
         self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
         uic.loadUi(path_for_gui + 'buy_tck.ui', self)
+        self.setStyleSheet(open("styles/buy_tct_style.css", "r").read())
         self.cancel.clicked.connect(self.close)
         self.accept.clicked.connect(self.accept_action)
 
@@ -1044,6 +1045,7 @@ class TrailerWidget(MyQWidget):
         self.parent = parent
         window_arr.append(self)
         self.ui = uic.loadUi(path_for_gui + "trailer.ui", self)
+        self.setStyleSheet(open("styles/trailer_style.css", "r").read())
         self.url = url
         self.setWindowTitle(title)
 
@@ -1136,6 +1138,7 @@ class AdminSignIn(MyQDialog):
         self.parent = parent
         window_arr.append(self)
         uic.loadUi(path_for_gui + 'admin_sign_in.ui', self)
+        self.setStyleSheet(open("styles/admin_style.css", "r").read())
         self.pushButton.clicked.connect(self.acept_data)
         self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
         self.Form = parent
