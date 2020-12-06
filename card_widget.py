@@ -43,15 +43,11 @@ class Ui_Form(object):
         # self.widget.setMinimumSize(QtCore.QSize(193, 346))
         #
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.widget)
-        self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.image_label = QtWidgets.QLabel(Form)
         self.image_label.setAlignment(QtCore.Qt.AlignCenter)
-        self.image_label.setObjectName("image_label")
         self.verticalLayout_2.addWidget(self.image_label)
         self.verticalLayout = QtWidgets.QVBoxLayout()
-        self.verticalLayout.setObjectName("verticalLayout")
-        self.horizontalLayout = QtWidgets.QHBoxLayout()
-        self.horizontalLayout.setObjectName("horizontalLayout")
+
         self.title = QtWidgets.QLabel(Form)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum,
                                            QtWidgets.QSizePolicy.Ignored)
@@ -73,39 +69,32 @@ class Ui_Form(object):
         self.title.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.title.setFrameShadow(QtWidgets.QFrame.Plain)
         self.title.setTextFormat(QtCore.Qt.AutoText)
-        self.title.setScaledContents(True)
-        self.title.setObjectName("title")
-        self.horizontalLayout.addWidget(self.title)
-        spacerItem = QtWidgets.QSpacerItem(40, 20,
-                                           QtWidgets.QSizePolicy.Expanding,
-                                           QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout.addItem(spacerItem)
+        self.verticalLayout.addWidget(self.title)
+
         self.genre = QtWidgets.QLabel(Form)
         font = QtGui.QFont()
         font.setPointSize(8)
         self.genre.setFont(font)
         self.genre.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
-        self.genre.setObjectName("genre")
-        self.horizontalLayout.addWidget(self.genre)
-        self.verticalLayout.addLayout(self.horizontalLayout)
+            QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.verticalLayout.addWidget(self.genre)
+
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
         self.rating = QtWidgets.QLabel(Form)
+
         font = QtGui.QFont()
         font.setPointSize(10)
         self.rating.setFont(font)
         self.rating.setAlignment(
             QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
-        self.rating.setObjectName("rating")
         self.horizontalLayout_2.addWidget(self.rating)
         self.year = QtWidgets.QLabel(Form)
+
         font = QtGui.QFont()
         font.setPointSize(10)
         self.year.setFont(font)
         self.year.setAlignment(
             QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
-        self.year.setObjectName("year")
         self.horizontalLayout_2.addWidget(self.year)
         self.verticalLayout.addLayout(self.horizontalLayout_2)
         self.verticalLayout_2.addLayout(self.verticalLayout)
@@ -113,7 +102,6 @@ class Ui_Form(object):
         self.btn = BtnWid(self.widget, film_id=id)
         self.btn.setMinimumWidth(189)
         self.btn.setMinimumHeight(35)
-        self.btn.setObjectName("btn")
         # self.btn.setStyleSheet("background-color: rgb(116, 125, 255);\n"
         #                        "border-width:1px;\n"
         #                        "border-radius: 10px;\n"
@@ -151,10 +139,10 @@ class Ui_Form(object):
                                                  Qt.KeepAspectRatio))
 
         self.title.setText(_translate("Form", title))
-        # self.title.setWordWrap(True)
+        self.title.setWordWrap(True)
         self.genre.setText(_translate("Form", genre))
         self.genre.setWordWrap(True)
-        self.rating.setText(_translate("Form", str(rating)))
+        self.rating.setText(_translate("Form", f'\u272D {rating}'))
         self.year.setText(_translate("Form", str(year)))
         self.btn.setText(_translate("Form", "Открыть карточку"))
         self.btn.clicked.connect(Form.open_card)

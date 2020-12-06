@@ -31,6 +31,10 @@
   <property name="windowTitle">
    <string>Билет</string>
   </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>../system_image/log2.bmp</normaloff>../system_image/log2.bmp</iconset>
+  </property>
   <property name="styleSheet">
    <string notr="true"/>
   </property>

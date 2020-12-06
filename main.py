@@ -57,11 +57,12 @@ sys.excepthook = my_exception_hook
 
 class WindowArr(list):
     """Для корректной реализации системы закрытия окон реализован класс,
-    наследующийся от списка и выполняющий проверки с окнами при их открытии  и закрытии"""
+    наследующийся от списка и выполняющий проверки с окнами при их открытии  и
+    закрытии"""
     def __init__(self):
         super().__init__()
         """Словарь используется для кранения 
-        открытых окон и детей в этих окнах"""
+        открытых окон и их детей в этих окнах"""
         self.dct = {}
         """Список необходим для хранения все отрытых окон"""
         self.list = list()
@@ -88,13 +89,9 @@ class WindowArr(list):
 
     def check_for_main_w(self, item):
         """Метод, который проверяет отрыти ли окна в
-        самом окне или же открыты ли другие окна
+        главном окне(фильтр и пр) или же открыты ли другие окна
         (в нашем случае карточки фильмов)"""
         if self.dct[hash(item)][-1] != item:
-            """Если открыты внутренние окна, такие 
-            как диалог с нстройкой фильтра
-            , то при закрытии окна показываем 
-            все открытые дочерние окна в этом окне"""
             self.setActive(item, False)
             return True
         elif self.list:
@@ -119,17 +116,25 @@ class WindowArr(list):
         return False
 
     def append(self, obj):
-        """Напишите в лс"""
+        # Узнаем номер родителя у окна, чтобы понять в каком
+        # именно окне октрылось новое окно
         h = hash(obj)
         if h not in self.dct:
+            # Если окна нет, то понимаем,
+            # что оно является родителем, и создаем новый элемент в словаре
             self.dct[h] = [obj]
         elif h in self.dct and obj.__class__.__name__ in \
                 list(map(lambda x: x.__class__.__name__, self.dct[h])):
             # print(obj, h)
+            """Если подобно окно уже было открыто, 
+            то активируем его, а новое, которо совпадает 
+            с открытым отправляем в список для закрытия, 
+            где окно закроется как только запустится метод show у этого окна"""
             self.setActive(obj, False)
             self.list_when_show_del.append(obj)
         else:
             self.dct[h].append(obj)
+        # Если класс окна является карточкой, то добавляем в список
         if obj.__class__.__name__ == 'CardOfFilm' and \
                 obj not in self.list_when_show_del:
             self.list.append(obj)
@@ -138,6 +143,9 @@ class WindowArr(list):
         return self.list[item]
 
     def del_item(self, item):
+        """Узнаем номер, и в зависимости от того,
+        является окно родителем или нет, удаляем
+        его или из списка и словаря или только из словаря"""
         h = hash(item)
         if item.__class__.__name__ != 'CardOfFilm':
             del self.dct[h][-1]
@@ -159,6 +167,9 @@ class MyQWidget(QWidget):
             super().closeEvent(a0)
 
     def show(self):
+        """Узнаем есть ли наше окно в списке тех окон,
+        которые надо закрыть при открытии"""
+        # В зависимоти от этого или показываем окно или закрываем его
         if window_arr.check_wind_in_list(self):
             super().close()
         else:
@@ -181,6 +192,7 @@ class MyQDialog(QDialog):
             super().closeEvent(a0)
 
     def show(self):
+        # Аналогично как в классе MyQWidget
         if window_arr.check_wind_in_list(self):
             self.close()
         else:

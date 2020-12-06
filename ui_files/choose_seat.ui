@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Выбор места</string>
   </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>../system_image/log2.bmp</normaloff>../system_image/log2.bmp</iconset>
+  </property>
   <property name="toolTip">
    <string/>
   </property>
