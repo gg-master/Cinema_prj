@@ -1076,7 +1076,7 @@ class TrailerWidget(MyQWidget):
         self.player.pause()
 
     def closeEvent(self, a0: QCloseEvent):
-        self.player.stop()
+        self.player.pause()
         super().closeEvent(a0)
 
 

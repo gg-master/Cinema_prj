@@ -16,6 +16,16 @@ QPushButton#pause_btn:pressed{
     icon: url("system_image/pause_real.bmp")
 }
 /*noinspection ALL*/
+QPushButton#pause_btn:hover:!pressed{
+    background-color: #cbcacc;
+    icon: url("system_image/pause_hover.bmp")
+}
+/*noinspection ALL*/
 QPushButton#play_btn:pressed{
     icon: url("system_image/continue_real.bmp")
+}
+/*noinspection ALL*/
+QPushButton#play_btn:hover:!pressed{
+    background-color: #cbcacc;
+    icon: url("system_image/continue_hover.bmp")
 }

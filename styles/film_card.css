@@ -10,6 +10,10 @@ QPushButton#buy_ticket_btn:pressed, QPushButton#playBtn:pressed{
     background-color: hsl(199, 27%, 40%);
 }
 /*noinspection ALL*/
+QPushButton#buy_ticket_btn:hover:!pressed, QPushButton#playBtn:hover:!pressed{
+    background-color: hsl(199, 46%, 63%);
+}
+/*noinspection ALL*/
 QPushButton#playBtn{
     width: 180%;
     icon: url("system_image/play_btn_r.bmp");
@@ -18,7 +22,14 @@ QPushButton#playBtn{
 QPushButton#playBtn:pressed{
     icon: url("system_image/play_btn_r_real.bmp");
 }
+/*noinspection ALL*/
+QPushButton#playBtn:hover:!pressed{
+    icon: url("system_image/play_btn_r_hover.bmp");
+}
 QPushButton#buy_ticket_btn{
     width: 150%;
+}
+QLabel#poster:hover{
+    background-color: #c2c2c2;
 }
 /*some_text*/

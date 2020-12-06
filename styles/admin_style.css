@@ -11,3 +11,6 @@ QPushButton{
 QPushButton:pressed{
     background-color: hsl(200, 27%, 40%);
 }
+QPushButton:hover:!pressed{
+    background-color: hsl(200, 46%, 63%);
+}

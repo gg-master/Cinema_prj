@@ -12,6 +12,10 @@ QPushButton#accept::pressed, QPushButton#cancel::pressed{
     background-color: hsl(200, 27%, 40%);
 }
 /*noinspection ALL*/
+QPushButton#accept::hover:!pressed, QPushButton#cancel::hover:!pressed{
+    background-color: hsl(200, 46%, 63%);
+}
+/*noinspection ALL*/
 QPushButton#accept::disabled{
     background-color: hsl(199, 34%, 70%);
 }
