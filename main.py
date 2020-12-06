@@ -14,7 +14,7 @@ import time
 with_wind_load = False
 base_path_for_none_img = r'system_image\none_img.jpg'
 path_for_system_img = 'system_image\\'
-relative_path_for_media = 'films_image\\'
+relative_path_for_media = 'films_image/'
 path_for_gui = 'ui_files\\'
 path_for_db = 'database\\'
 
@@ -1062,7 +1062,7 @@ class TrailerWidget(MyQWidget):
         #
         # player.play()
         self.player = QMediaPlayer(None, QMediaPlayer.VideoSurface)
-        self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.url)))
+        self.player.setMedia(QMediaContent(QUrl(self.url)))
         # self.player.setMedia(QMediaContent(QUrl('https://www.youtube.com/embed/xfIQ8h2_0TI')))
         self.player.setVideoOutput(self.ui.widget)
         self.play()
