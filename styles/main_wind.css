@@ -32,14 +32,13 @@ QPushButton#admin_btn{
 }
 /*noinspection ALL*/
 QPushButton#search_btn:pressed, QPushButton#sort_btn:pressed, QPushButton#admin_btn:pressed{
-    background-color: hsl(199, 27%, 42%);
+    /*background-color: hsl(199, 27%, 42%);*/
+    background-color: hsl(200, 27%, 40%);
 }
 /*noinspection ALL*/
 QPushButton#sort_btn:pressed{
     icon: url("system_image/sort_item_r_real.bmp");
 }
-
-
 /*QScrollBar:vertical {*/
     /*!*border: 0px solid #999999;*!*/
     /*!*background:white;*!*/

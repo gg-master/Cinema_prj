@@ -7,7 +7,7 @@ QPushButton#buy_ticket_btn, QPushButton#playBtn{
 }
 /*noinspection ALL*/
 QPushButton#buy_ticket_btn:pressed, QPushButton#playBtn:pressed{
-    background-color: hsl(199, 27%, 42%);
+    background-color: hsl(199, 27%, 40%);
 }
 /*noinspection ALL*/
 QPushButton#playBtn{

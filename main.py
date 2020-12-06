@@ -1084,6 +1084,7 @@ class FilterDialog(MyQDialog):
         self.parent = parent
         super().__init__(parent)
         uic.loadUi(path_for_gui + 'filter.ui', self)
+        self.setStyleSheet(open("styles/filter_style.css", "r").read())
         self.setWindowTitle('Настройки сортировки')
         self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
         self.buttonBox.accepted.connect(self.acept_data)
