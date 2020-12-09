@@ -363,7 +363,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
 
     def create_request_for_filter(self):
         # Возвращает сформированный запрос для базы
-        # основываясь на данных диалога
+        # основываясь на данных из окна диалога
         try:
             dct = self.filt.get_items()
             s = ''
@@ -514,13 +514,13 @@ class CardOfFilm(MyQWidget):
         # Загрузка фото
         w_l, h_l = self.img.width(), self.img.height()
         self.img.setPixmap(pixmap_poster.scaled(w_l + win_w // 2,
-                                         h_l + win_h // 2,
-                                         Qt.KeepAspectRatio))
+                                                h_l + win_h // 2,
+                                                Qt.KeepAspectRatio))
         self.poster.setPixmap(pixmap_image.scaled(w_l * 3, h_l * 3,
-                                                   Qt.KeepAspectRatio))
+                                                  Qt.KeepAspectRatio))
 
         self.poster_2.setPixmap(pixmap_image_2.scaled(w_l * 3, h_l * 3,
-                                                       Qt.KeepAspectRatio))
+                                                      Qt.KeepAspectRatio))
 
         # Загрузка текстовой информации
         self.year.setText(str(year))
@@ -781,27 +781,32 @@ class BuyTct(MyQDialog):
         появляется окно с информацией о месте, времени и тд
         Кроме этого окно нельзя будет закрыть пока пользователь не нажмет на
         кнопку "Сохранить" и не выберет путь для сохранения билета"""
-        cur = conn.cursor()
-        self.isAccepted = True
-        for i in self.numb:
-            self.places[i] = '1'
-        s = f'{", ".join(self.places)}'
-        req = f'{s}'
-        cur.execute(f'''UPDATE timetable
-                        set places = ?
-                        WHERE id = ?''', (req, self.id_films_in_c))
-        conn.commit()
-        for i in range(len(self.numb)):
-            self.counter_places += 1
-            place = self.numb[i] + 1
-            self.ticket = Ticket(self, place)
-            self.ticket.show()
-        # После сохранения всех билетов отключается
-        # возможность повторного подтверждения заказа и выбора места
-        self.statusBar.setText("Билеты сохранены. Ждем вас на сеансе")
-        self.accept.setEnabled(False)
-        self.choose_place_btn.setEnabled(False)
-        self.cancel.setEnabled(False)
+        msg = QMessageBox()
+        ret = msg.question(self, 'Подтверждение заказа',
+                           "Действительно подтвердить покупку?",
+                           msg.Yes | msg.No)
+        if ret == msg.Yes:
+            cur = conn.cursor()
+            self.isAccepted = True
+            for i in self.numb:
+                self.places[i] = '1'
+            s = f'{", ".join(self.places)}'
+            req = f'{s}'
+            cur.execute(f'''UPDATE timetable
+                            set places = ?
+                            WHERE id = ?''', (req, self.id_films_in_c))
+            conn.commit()
+            for i in range(len(self.numb)):
+                self.counter_places += 1
+                place = self.numb[i] + 1
+                self.ticket = Ticket(self, place)
+                self.ticket.show()
+            # После сохранения всех билетов отключается
+            # возможность повторного подтверждения заказа и выбора места
+            self.statusBar.setText("Билеты сохранены. Ждем вас на сеансе")
+            self.accept.setEnabled(False)
+            self.choose_place_btn.setEnabled(False)
+            self.cancel.setEnabled(False)
     #
     # def __hash__(self):
     #     return hash(self.parent)
@@ -816,6 +821,7 @@ class Ticket(MyQWidget):
         window_arr.append(self)
 
         uic.loadUi(path_for_gui + 'successful_purchase.ui', self)
+        self.setStyleSheet(open("styles/ticket_style.css", "r").read())
         self.pushButton.clicked.connect(self.choose_way)
 
         # Разметка
