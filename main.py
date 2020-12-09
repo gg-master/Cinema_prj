@@ -14,7 +14,9 @@ import time
 with_wind_load = False
 base_path_for_none_img = r'system_image\none_img.jpg'
 path_for_system_img = 'system_image\\'
-relative_path_for_media = 'films_image/'
+# rel_p = "\\".join(__file__.split("/")[:-1])
+relative_path_for_media = 'films_image\\'
+# print(relative_path_for_media)
 path_for_gui = 'ui_files\\'
 path_for_db = 'database\\'
 
@@ -203,7 +205,7 @@ class MyQDialog(QDialog):
 
 
 class MyPopup(QWidget):
-    """Выслывающее окно для увеличенного просомтра изображений."""
+    """Выслывающее окно для увеличенного просмотра изображений."""
     def __init__(self, parent, pixmap_path):
         super().__init__()
         self.label = QLabel(self)
@@ -214,10 +216,15 @@ class MyPopup(QWidget):
         # Установка размеров окна, и изображения
         # TODO можно поиграться с размером изображения
         #  установить может быть коэффициенты и пр
-        self.resize(parent.width() // 2, parent.height())
-        self.label.resize(self.width(), self.height())
+        # self.resize(parent.width() // 2, parent.height())
+        # self.resize(parent.width() // 2, parent.height())
+        h = pixmap.height() // 1.1
+        w = pixmap.width() // 1.1
+        self.resize(w, h)
+        self.label.resize(w, h)
         self.move(parent.x() + parent.width() // 2 - self.label.width() // 2,
-                  parent.y() + parent.height() // 2 - self.label.height() // 2 + 30)
+                  parent.y() + parent.height() // 2 - self.label.height() //
+                  2 + 30)
 
         self.label.setPixmap(pixmap.scaled(self.width(), self.height(),
                                            Qt.KeepAspectRatio))
@@ -281,7 +288,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
                 if i + j >= len(rez):
                     break
                 # images подразумевается как постер. т.е основная картинка
-                id, title, rating, genre, year, images = rez[i + j]
+                id_f, title, rating, genre, year, images = rez[i + j]
                 """Форматируем даные, добавляем коренную папку с картинкам"""
                 if images:
                     images = images.split(', ')
@@ -291,7 +298,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
                             images[img] = \
                                 f'{relative_path_for_media}{images[img]}'
                 """Создаем мини-карточку фильма"""
-                w = self.make_card_film(id, title, rating, genre, year,
+                w = self.make_card_film(id_f, title, rating, genre, year,
                                         [images, base_path_for_none_img])
                 self.layout.addWidget(w, i, j)
         # Заполняем наш виджет карточками
@@ -299,12 +306,12 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
 
         self.setWindowTitle('Кинотеатр-0.0.1')
 
-    def make_card_film(self, id, title, rating, genre, year, images):
+    def make_card_film(self, id_f, title, rating, genre, year, images):
         # Загрузка миник-карточки из ui кода сгенерированная с помощью pyuic
         w = QWidget(self)
         lo = QVBoxLayout(w)
-        lo.addWidget(self.setupUi(self, id, title, rating, genre,
-                                               year, images))
+        lo.addWidget(self.setupUi(self, id_f, title, rating, genre,
+                                  year, images))
         w.setLayout(lo)
         return w
 
@@ -371,13 +378,13 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
                     dct['producer'][1] = 'NONE'
                 s += f' and producer like "{dct["producer"][1]}"'
             return s
-        except Exception as ex:
-            print(ex)
+        except Exception as exc:
+            print(exc)
 
     def admin_sign_in(self):
-        self.aW = AdminSignIn(self)
-        self.aW.show()
-        self.aW.exec_()
+        aw = AdminSignIn(self)
+        aw.show()
+        aw.exec_()
 
     def closeEvent(self, a0: QCloseEvent):
         if window_arr.check_for_main_w(self):
@@ -420,8 +427,8 @@ class CardOfFilm(MyQWidget):
             pixmap = self.path_img['poster_2']
         if pixmap is not None:
             if event.type() == QEvent.MouseButtonPress:
-                mouseEvent = QMouseEvent(event)
-                if mouseEvent.buttons() == Qt.LeftButton:
+                mouse_event = QMouseEvent(event)
+                if mouse_event.buttons() == Qt.LeftButton:
                     # Если левая кнопка удерживается,
                     # то открываем окно с увеличенной картинкой
                     self.wind = MyPopup(self, pixmap)
@@ -456,10 +463,11 @@ class CardOfFilm(MyQWidget):
         description = rez[8]
         """Под постером подразумевается основная картинка
         Под images подразумеваются кадры из фильма и тд
-        Здесь """
+        """
         poster = rez[9]
         images = rez[10]
         self.trailer = relative_path_for_media + str(rez[11])
+        # print(self.trailer)
 
         pixmap_poster = QPixmap(base_path_for_none_img)
         pixmap_image = QPixmap(base_path_for_none_img)
@@ -529,14 +537,11 @@ class CardOfFilm(MyQWidget):
         В будущем есть идея ввести открытие видео-файла по ссылке,
         чтобы не хранить видео-файл на устройстве"""
         # TODO попробовать реализовать открытие видео по ссылке
-        try:
-            if self.trailer is not None and os.path.isfile(self.trailer):
-                self.vid = TrailerWidget(self, self.trailer, self.title)
-                self.vid.show()
-            else:
-                self.statusBar.setText('Трейлер не найден')
-        except:
-            pass
+        if self.trailer is not None and os.path.isfile(self.trailer):
+            self.vid = TrailerWidget(self, self.trailer, self.title)
+            self.vid.show()
+        else:
+            self.statusBar.setText('Трейлер не найден')
 
     def __hash__(self):
         return hash(int(self.id))
@@ -1046,7 +1051,8 @@ class TrailerWidget(MyQWidget):
         window_arr.append(self)
         self.ui = uic.loadUi(path_for_gui + "trailer.ui", self)
         self.setStyleSheet(open("styles/trailer_style.css", "r").read())
-        self.url = url
+        self.url = url  # url такой: films_image/name_file.MP4
+        # print(self.url)
         self.setWindowTitle(title)
 
         # Попытки загружать через ссылки
@@ -1062,10 +1068,10 @@ class TrailerWidget(MyQWidget):
         #
         # player.play()
         self.player = QMediaPlayer(None, QMediaPlayer.VideoSurface)
-        self.player.setMedia(QMediaContent(QUrl(self.url)))
+        self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.url)))
         # self.player.setMedia(QMediaContent(QUrl('https://www.youtube.com/embed/xfIQ8h2_0TI')))
         self.player.setVideoOutput(self.ui.widget)
-        self.play()
+        self.player.play()
         self.play_btn.clicked.connect(self.play)
         self.pause_btn.clicked.connect(self.pause)
 
@@ -1090,7 +1096,7 @@ class FilterDialog(MyQDialog):
         self.setWindowTitle('Настройки сортировки')
         self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
         self.buttonBox.accepted.connect(self.acept_data)
-        self.buttonBox.rejected.connect(self.reject_data)
+        self.buttonBox.rejected.connect(self.close)
         self.a = {'year': [False, ''],
                   'genre': [False, ''],
                   'rating': [False, ''],
@@ -1123,9 +1129,6 @@ class FilterDialog(MyQDialog):
         else:
             self.a['producer'] = [False, '']
         # print(self.a)
-        self.close()
-
-    def reject_data(self):
         self.close()
 
     def get_items(self):

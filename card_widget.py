@@ -142,7 +142,7 @@ class Ui_Form(object):
         self.title.setWordWrap(True)
         self.genre.setText(_translate("Form", genre))
         self.genre.setWordWrap(True)
-        self.rating.setText(_translate("Form", f'\u272D {rating}'))
+        self.rating.setText(_translate("Form", f'\u2605 {rating}'))
         self.year.setText(_translate("Form", str(year)))
         self.btn.setText(_translate("Form", "Открыть карточку"))
         self.btn.clicked.connect(Form.open_card)
