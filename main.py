@@ -343,13 +343,13 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
         """Стоит включить, но придется настроить поиск
         Проблема состоит в том, что вместо определенных жанров, загружаются 
         сразу те, которые определенеы у фильмов"""
-        # new_genre = set()
-        # for i in genre:
-        #     arr = i.split(', ')
-        #     for j in arr:
-        #         j = j.strip('\n')
-        #         new_genre.add(j)
-        # genre = list(sorted(list(new_genre)))
+        new_genre = set()
+        for i in genre:
+            arr = i.split(', ')
+            for j in arr:
+                j = j.strip('\n')
+                new_genre.add(j)
+        genre = list(sorted(list(new_genre)))
         rating = list(set(map(lambda x: str(x[2]), rez)))
         producer = []
         for i in rez:
@@ -370,7 +370,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
             if dct['year'][0]:
                 s += f' and year like "{dct["year"][1]}"'
             if dct['genre'][0]:
-                s += f' and genre like "{dct["genre"][1]}"'
+                s += f' and genre like "%{dct["genre"][1]}%"'
             if dct['rating'][0]:
                 s += f' and rating like "{dct["rating"][1]}"'
             if dct['producer'][0]:
@@ -765,6 +765,10 @@ class BuyTct(MyQDialog):
         self.cinemas_2.addItems(rez)
 
     def closeEvent(self, a0: QCloseEvent):
+        """Планировалось при мгновенном закрытии окна автоматически
+            сохранять билеты по указанному ранее пути
+        Но из-за особенности системы закрытия окон эта возможность
+            пока не может быть реализована"""
         # if self.isAccepted:
         #     if self.counter_places != len(self.numb):
         #         if self.path_for_tct is not None:
