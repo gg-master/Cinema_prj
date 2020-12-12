@@ -234,8 +234,16 @@ class MyPopup(QWidget):
         # self.resize(parent.width() // 2, parent.height())
         # self.resize(parent.width() // 2, parent.height())
         # TODO переделать размеры
-        h = int(pixmap.height() // 1.1)
-        w = int(pixmap.width() // 1.1)
+        max_h, max_w = parent.height() * (2 / 3), parent.width() * (2 / 3)
+        p_h, p_w = pixmap.height(), pixmap.width()
+        k_h = max_h / p_h
+        k_w = max_w / p_w
+        if p_h > p_w:
+            h = max_h
+            w = p_w * k_h
+        elif p_h < p_w:
+            h = p_h * k_w
+            w = max_w
         self.resize(w, h)
         self.label.resize(w, h)
         self.move(parent.x() + parent.width() // 2 - self.label.width() // 2,
@@ -318,7 +326,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
         # Заполняем наш виджет карточками
         self.scrollAreaWidgetContents.setLayout(self.layout)
 
-        self.setWindowTitle('Кинотеатр-0.0.1')
+        self.setWindowTitle('Кинотеатр-1.1.0')
 
     def make_card_film(self, id_f, title, rating, genre, year, images):
         # Загрузка миник-карточки из ui кода сгенерированная с помощью pyuic
@@ -410,10 +418,21 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
         return hash(self.id)
 
 
+class Film:
+    def __init__(self):
+        self.title = ''
+        self.path_poster = None
+        self.path_image_1 = None
+        self.path_image_2 = None
+        self.path_trailer = None
+
+
 class CardOfFilm(MyQWidget):
     """Окно карточки
     Представляет просмотр информации о фильме и возможности покупки билета
     """
+    resized = QtCore.pyqtSignal()
+
     def __init__(self, parent, id_film):
         self.id = id_film
         super().__init__()
@@ -427,37 +446,68 @@ class CardOfFilm(MyQWidget):
         self.buy_ticket_btn.clicked.connect(self.buy_ticket)
         self.poster.installEventFilter(self)
         self.poster_2.installEventFilter(self)
+        self.resized.connect(self.resize_image)
 
         # Определение некотрых переменных
-        self.wind = self.path_img = self.title = self.trailer = None
+        self.Filmcl = Film()
+        self.wind = None
 
         self.load_info()
 
     def eventFilter(self, obj, event):
         """Событие, которое реагирует на нажатия кнопкой мыши на
         дополнительные изображения в карточке фильма"""
-        pixmap = None
+        pixmap_p = None
         # Получаем путь к изображениям, установленных в label в gui
         if obj == self.poster:
-            pixmap = self.path_img['poster_1']
+            pixmap_p = self.Filmcl.path_image_1
         elif obj == self.poster_2:
-            pixmap = self.path_img['poster_2']
-        if pixmap is not None:
+            pixmap_p = self.Filmcl.path_image_2
+        if pixmap_p is not None:
             if event.type() == QEvent.MouseButtonPress:
                 mouse_event = QMouseEvent(event)
                 if mouse_event.buttons() == Qt.LeftButton:
                     # Если левая кнопка удерживается,
                     # то открываем окно с увеличенной картинкой
-                    self.wind = MyPopup(self, pixmap)
+                    self.wind = MyPopup(self, pixmap_p)
                     self.wind.show()
             if event.type() == QEvent.MouseButtonRelease:
                 self.wind.close()
 
         return MyQWidget.eventFilter(self, obj, event)
 
+    def resizeEvent(self, event):
+        self.resized.emit()
+        return super().resizeEvent(event)
+
+    def resize_image(self):
+        """Была идея сделать мастшабируемую
+        картику в карточке фильма.
+        Но из-за технических сложностей отложили эту фичу"""
+        pass
+        # pixmap_poster = QPixmap(self.Filmcl.path_poster)
+        #
+        # max_h, max_w = self.img.height(), self.img.width()
+        # p_h, p_w = pixmap_poster.height(), pixmap_poster.width()
+        # print('max', max_h, max_w)
+        # print(p_h, p_w)
+        # k_h = max_h / p_h
+        # k_w = max_w / p_w
+        # if p_h > p_w:
+        #     h = max_h
+        #     w = p_w * k_h
+        # else:
+        #     h = p_h * k_w
+        #     w = max_w
+        # # self.img.setPixmap(pixmap_poster.scaled(int(w), int(h),
+        # #                                         Qt.KeepAspectRatio))
+        # pixSize = QSize(self.img.pixmap().size())
+        # pixSize.scale(w, h, Qt.KeepAspectRatio)
+        # self.img.setFixedSize(pixSize)
+
     def buy_ticket(self):
         """Функция, которая открывает окно для покупки билетов"""
-        bt = BuyTct(self, self.id, self.title)
+        bt = BuyTct(self, self.id, self.Filmcl.title)
         bt.show()
         bt.exec_()
 
@@ -465,9 +515,7 @@ class CardOfFilm(MyQWidget):
         """Загрузка основной информации в оставшиеся label в gui"""
         rez = db.request("SELECT * from films where id like ?",
                          self.id).fetchall()[0]
-        self.path_img = {"poster_1": None,
-                         'poster_2': None}
-        self.title = rez[1]
+        self.Filmcl.title = rez[1]
         rating = rez[2]
         genre = rez[3]
         actors = rez[4]
@@ -480,8 +528,7 @@ class CardOfFilm(MyQWidget):
         """
         poster = rez[9]
         images = rez[10]
-        self.trailer = relative_path_for_media + str(rez[11])
-        # print(self.trailer)
+        self.Filmcl.path_trailer = relative_path_for_media + str(rez[11])
 
         pixmap_poster = QPixmap(base_path_for_none_img)
         pixmap_image = QPixmap(base_path_for_none_img)
@@ -495,36 +542,37 @@ class CardOfFilm(MyQWidget):
                 if poster[img] and not poster[img].startswith('http'):
                     poster[img] = \
                         f'{relative_path_for_media}{poster[img]}'
-            if poster[0].startswith('http'):
-                pixmap_poster = load_url_img.load_image_from_url(poster[0])
-            elif os.path.isfile(poster[0]):
-                pixmap_poster = QPixmap(poster[0])
-            elif len(poster) > 1 and os.path.isfile(poster[1]):
-                pixmap_poster = QPixmap(poster[1])
-            elif len(poster) > 1 and poster[1].startswith('http'):
-                pixmap_poster = load_url_img.load_image_from_url(poster[1])
+            for path_p in poster:
+                if os.path.isfile(path_p):
+                    pixmap_poster = QPixmap(path_p)
+                    self.Filmcl.path_poster = path_p
+                    break
+                elif path_p.startswith('http'):
+                    pixmap_poster = load_url_img.load_image_from_url(path_p)
+                    self.Filmcl.path_poster = pixmap_poster
         if images:
             images = images.split(', ')
             for img in range(len(images)):
                 if images[img] and not images[img].startswith('http'):
                     images[img] = \
                         f'{relative_path_for_media}{images[img]}'
-            if images[0].startswith('http'):
-                pixmap_image = load_url_img.load_image_from_url(images[0])
-                self.path_img["poster_1"] = images[0]
-            elif len(images) > 1 and images[1].startswith('http'):
-                pixmap_image_2 = load_url_img.load_image_from_url(images[1])
-                self.path_img["poster_2"] = images[1]
-            elif os.path.isfile(images[0]):
-                pixmap_image = QPixmap(images[0])
-                self.path_img["poster_1"] = images[0]
-            elif len(images) > 1 and os.path.isfile(images[1]):
-                pixmap_image_2 = QPixmap(images[1])
-                self.path_img["poster_2"] = images[1]
-
+            for path_p in images:
+                if os.path.isfile(path_p):
+                    if self.Filmcl.path_image_1 is None:
+                        self.Filmcl.path_image_1 = path_p
+                    elif self.Filmcl.path_image_2 is None:
+                        self.Filmcl.path_image_2 = path_p
+                    pixmap_image = QPixmap(path_p)
+                    break
+                elif path_p.startswith('http'):
+                    pixmap_image = load_url_img.load_image_from_url(path_p)
+                    if self.Filmcl.path_image_1 is None:
+                        self.Filmcl.path_image_1 = pixmap_image
+                    elif self.Filmcl.path_image_2 is None:
+                        self.Filmcl.path_image_2 = pixmap_image
+                    break
         """Установка всех данных и корректировка размеров картинок"""
         win_w, win_h = self.width(), self.height()
-
         # Загрузка фото
         w_l, h_l = self.img.width(), self.img.height()
         self.img.setPixmap(pixmap_poster.scaled(w_l + win_w // 2,
@@ -540,7 +588,7 @@ class CardOfFilm(MyQWidget):
         self.year.setText(str(year))
         self.duration.setText(str(duration))
         self.description_2.setText(description)
-        self.title_2.setText(self.title)
+        self.title_2.setText(self.Filmcl.title)
         self.rating_2.setText(str(rating))
         self.genre_2.setText(genre)
         self.producer_2.setText(producer)
@@ -551,8 +599,10 @@ class CardOfFilm(MyQWidget):
         В будущем есть идея ввести открытие видео-файла по ссылке,
         чтобы не хранить видео-файл на устройстве"""
         # TODO попробовать реализовать открытие видео по ссылке
-        if self.trailer is not None and os.path.isfile(self.trailer):
-            self.vid = TrailerWidget(self, self.trailer, self.title)
+        if self.Filmcl.path_trailer is not None \
+                and os.path.isfile(self.Filmcl.path_trailer):
+            self.vid = TrailerWidget(self, self.Filmcl.path_trailer,
+                                     self.Filmcl.title)
             self.vid.show()
         else:
             self.statusBar.setText('Трейлер не найден')
