@@ -57,6 +57,21 @@ sys.excepthook = my_exception_hook
 '''
 
 
+class DataBase:
+    def __init__(self, name_db):
+        self.conn = sqlite3.connect(path_for_db + name_db)
+
+    def request(self, request, *param):
+        cur = self.conn.cursor()
+        if param:
+            return cur.execute(request, (*param,))
+        else:
+            return cur.execute(request)
+
+    def commit(self):
+        self.conn.commit()
+
+
 class WindowArr(list):
     """Для корректной реализации системы закрытия окон реализован класс,
     наследующийся от списка и выполняющий проверки с окнами при их открытии  и
@@ -218,8 +233,9 @@ class MyPopup(QWidget):
         #  установить может быть коэффициенты и пр
         # self.resize(parent.width() // 2, parent.height())
         # self.resize(parent.width() // 2, parent.height())
-        h = pixmap.height() // 1.1
-        w = pixmap.width() // 1.1
+        # TODO переделать размеры
+        h = int(pixmap.height() // 1.1)
+        w = int(pixmap.width() // 1.1)
         self.resize(w, h)
         self.label.resize(w, h)
         self.move(parent.x() + parent.width() // 2 - self.label.width() // 2,
@@ -268,13 +284,11 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
             if child.widget():
                 child.widget().deleteLater()
 
-        cur = conn.cursor()
         # Запрос в базу
         request = f'''SELECT id, title, rating, genre, 
                                         year, poster from films
                                         where title like "{search_text}" {s}'''
-        rez = cur.execute(request).fetchall()
-
+        rez = db.request(request).fetchall()
         if len(rez) == 0:
             self.statusbar.showMessage('Фильмы не найдены')
         else:
@@ -332,14 +346,13 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
         Открытие окна фильтровки поиска и обновление
         главного окна в соответствии с установленными фильтрами
         """
-        cur = conn.cursor()
         # Запрос в базу
-        rez = cur.execute("""SELECT DISTINCT year, genre, rating, producer 
+        rez = db.request("""SELECT DISTINCT year, genre, rating, producer 
         from films""").fetchall()
         # Форматирование результата запроса
-        years = list(set(map(lambda x: str(x[0]), rez)))
-        genre = list(set(map(lambda x: x[1], rez)))
-
+        years = sorted(list(set(map(lambda x: str(x[0]), rez))),
+                       key=lambda x: int(x))
+        genre = sorted(list(set(map(lambda x: x[1], rez))))
         """Стоит включить, но придется настроить поиск
         Проблема состоит в том, что вместо определенных жанров, загружаются 
         сразу те, которые определенеы у фильмов"""
@@ -350,14 +363,15 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
                 j = j.strip('\n')
                 new_genre.add(j)
         genre = list(sorted(list(new_genre)))
-        rating = list(set(map(lambda x: str(x[2]), rez)))
+        rating = sorted(list(set(map(lambda x: str(x[2]), rez))),
+                        key=lambda x: float(x))
         producer = []
         for i in rez:
             name = i[3]
             if name is not None:
                 name = name.strip('\n')
                 producer.append(name)
-
+        producer = sorted(producer)
         self.filt = FilterDialog(self)
         self.filt.reload_ui(years, genre, rating, producer)
 
@@ -414,6 +428,9 @@ class CardOfFilm(MyQWidget):
         self.poster.installEventFilter(self)
         self.poster_2.installEventFilter(self)
 
+        # Определение некотрых переменных
+        self.wind = self.path_img = self.title = self.trailer = None
+
         self.load_info()
 
     def eventFilter(self, obj, event):
@@ -446,11 +463,8 @@ class CardOfFilm(MyQWidget):
 
     def load_info(self):
         """Загрузка основной информации в оставшиеся label в gui"""
-        cur = conn.cursor()
-        rez = cur.execute("""SELECT * from films
-                                        where id like ?""",
-                          (self.id,)).fetchall()[0]
-
+        rez = db.request("SELECT * from films where id like ?",
+                         self.id).fetchall()[0]
         self.path_img = {"poster_1": None,
                          'poster_2': None}
         self.title = rez[1]
@@ -702,22 +716,17 @@ class BuyTct(MyQDialog):
     def load_other(self):
         """Загружаются оставшиеся данные в соответствии с
         выбранным кинотеатром и временем"""
-        cur = conn.cursor()
         name_c = self.cinemas_2.currentText()
         self.time_s = self.times.currentText()
 
-        rez_c = cur.execute("""SELECT * from cinemas 
-                                    where name_cinema like ?""", (
-            name_c,)).fetchall()[0]
+        rez_c = db.request("""SELECT * from cinemas 
+                                    where name_cinema like ?""",
+                           name_c).fetchall()[0]
         id_c = rez_c[0]
-        rez_f = cur.execute("""Select 
-                time_end, places, 
-                price, id, cinema_hall_id 
-                from timetable 
-                where id_film like ? 
-                and cinema_id like ? 
-                and time_start  like ?""", (
-            self.film_id, id_c, self.time_s)).fetchall()[0]
+        rez_f = db.request("""Select time_end, places, price, id, 
+        cinema_hall_id from timetable where id_film like ? and cinema_id like ? 
+                and time_start  like ?""",
+                           self.film_id, id_c, self.time_s).fetchall()[0]
         self.time_to.setText(rez_f[0])
         self.price.setText(str(rez_f[2]))
         self.places = rez_f[1].split(', ')
@@ -728,13 +737,11 @@ class BuyTct(MyQDialog):
     def load_time(self):
         """Загрузка доступного времени в
         соответствии с выбранным кинотетром из базы"""
-        cur = conn.cursor()
         name_c = self.cinemas_2.currentText()
 
         # Загрузка информации о кинотетре
-        rez_c = cur.execute("""SELECT * from cinemas 
-                            where name_cinema like ?""", (
-            name_c,)).fetchall()[0]
+        rez_c = db.request("""SELECT * from cinemas 
+                            where name_cinema like ?""", name_c).fetchall()[0]
 
         self.adress.setText(rez_c[2])
         self.phone.setText(rez_c[3])
@@ -742,9 +749,9 @@ class BuyTct(MyQDialog):
 
         # Загрузка времени
         id_c = rez_c[0]
-        rez_time = cur.execute("""SELECT time_start from timetable 
-        where id_film like ? and cinema_id like ?""", (
-            self.film_id, id_c)).fetchall()
+        rez_time = db.request("""SELECT time_start from timetable 
+        where id_film like ? and cinema_id like ?""",
+                              self.film_id, id_c).fetchall()
         if not rez_time:
             self.statusBar.setText('Данного фильма не найденно')
             return
@@ -754,10 +761,9 @@ class BuyTct(MyQDialog):
 
     def load_cinemas(self):
         # Загрузка времени и добавление в ComboBox
-        cur = conn.cursor()
         self.title.setText(self.film_title)
         self.dct_cinema = {}
-        rez = cur.execute("""SELECT id, name_cinema from cinemas""").fetchall()
+        rez = db.request("""SELECT id, name_cinema from cinemas""").fetchall()
         for i in rez:
             id, name = i[:2]
             self.dct_cinema[id] = name
@@ -790,16 +796,15 @@ class BuyTct(MyQDialog):
                            "Действительно подтвердить покупку?",
                            msg.Yes | msg.No)
         if ret == msg.Yes:
-            cur = conn.cursor()
             self.isAccepted = True
             for i in self.numb:
                 self.places[i] = '1'
             s = f'{", ".join(self.places)}'
             req = f'{s}'
-            cur.execute(f'''UPDATE timetable
+            db.request(f'''UPDATE timetable
                             set places = ?
-                            WHERE id = ?''', (req, self.id_films_in_c))
-            conn.commit()
+                            WHERE id = ?''', req, self.id_films_in_c)
+            db.commit()
             for i in range(len(self.numb)):
                 self.counter_places += 1
                 place = self.numb[i] + 1
@@ -1082,14 +1087,8 @@ class TrailerWidget(MyQWidget):
         # self.player.setMedia(QMediaContent(QUrl('https://www.youtube.com/embed/xfIQ8h2_0TI')))
         self.player.setVideoOutput(self.ui.widget)
         self.player.play()
-        self.play_btn.clicked.connect(self.play)
-        self.pause_btn.clicked.connect(self.pause)
-
-    def play(self):
-        self.player.play()
-
-    def pause(self):
-        self.player.pause()
+        self.play_btn.clicked.connect(self.player.play)
+        self.pause_btn.clicked.connect(self.player.pause)
 
     def closeEvent(self, a0: QCloseEvent):
         self.player.pause()
@@ -1197,11 +1196,9 @@ class MovieSplashScreen(QSplashScreen):
         return self.movie.scaledSize()
 
 
-# if __name__ == '__main__':
-#
-
 if __name__ == "__main__":
     window_arr = WindowArr()
+    db = DataBase('mydatabase.db')
     if not with_wind_load:
             app = QApplication(sys.argv)
             ex = MainWindow()
