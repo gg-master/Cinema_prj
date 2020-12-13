@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Вход для администратора</string>
   </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>../system_image/log2.bmp</normaloff>../system_image/log2.bmp</iconset>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QFormLayout" name="formLayout">

@@ -14,20 +14,20 @@ import time
 with_wind_load = False
 base_path_for_none_img = r'system_image\none_img.jpg'
 path_for_system_img = 'system_image\\'
+# rel_p = "\\".join(__file__.split("/")[:-1])
 relative_path_for_media = 'films_image\\'
+# print(relative_path_for_media)
 path_for_gui = 'ui_files\\'
 path_for_db = 'database\\'
 
 admin_login = 'admin'
 admin_pass = 'admin'
+
 col_in_mainWindow = 4
-
-conn = sqlite3.connect(path_for_db + "mydatabase.db")
-
 wdw = 207 * col_in_mainWindow
 wdh = 346 + 50 + 150
 
-tickets_numb = 0
+tickets_numb = int(open('tickets_numb.txt', 'r').read())
 
 
 def my_exception_hook(exctype, value, traceback):
@@ -55,13 +55,29 @@ sys.excepthook = my_exception_hook
 '''
 
 
+class DataBase:
+    def __init__(self, name_db):
+        self.conn = sqlite3.connect(path_for_db + name_db)
+
+    def request(self, request, *param):
+        cur = self.conn.cursor()
+        if param:
+            return cur.execute(request, (*param,))
+        else:
+            return cur.execute(request)
+
+    def commit(self):
+        self.conn.commit()
+
+
 class WindowArr(list):
     """Для корректной реализации системы закрытия окон реализован класс,
-    наследующийся от списка и выполняющий проверки с окнами при их открытии  и закрытии"""
+    наследующийся от списка и выполняющий проверки с окнами при их открытии  и
+    закрытии"""
     def __init__(self):
         super().__init__()
         """Словарь используется для кранения 
-        открытых окон и детей в этих окнах"""
+        открытых окон и их детей в этих окнах"""
         self.dct = {}
         """Список необходим для хранения все отрытых окон"""
         self.list = list()
@@ -88,13 +104,9 @@ class WindowArr(list):
 
     def check_for_main_w(self, item):
         """Метод, который проверяет отрыти ли окна в
-        самом окне или же открыты ли другие окна
+        главном окне(фильтр и пр) или же открыты ли другие окна
         (в нашем случае карточки фильмов)"""
         if self.dct[hash(item)][-1] != item:
-            """Если открыты внутренние окна, такие 
-            как диалог с нстройкой фильтра
-            , то при закрытии окна показываем 
-            все открытые дочерние окна в этом окне"""
             self.setActive(item, False)
             return True
         elif self.list:
@@ -119,17 +131,25 @@ class WindowArr(list):
         return False
 
     def append(self, obj):
-        """Напишите в лс"""
+        # Узнаем номер родителя у окна, чтобы понять в каком
+        # именно окне октрылось новое окно
         h = hash(obj)
         if h not in self.dct:
+            # Если окна нет, то понимаем,
+            # что оно является родителем, и создаем новый элемент в словаре
             self.dct[h] = [obj]
         elif h in self.dct and obj.__class__.__name__ in \
                 list(map(lambda x: x.__class__.__name__, self.dct[h])):
             # print(obj, h)
+            """Если подобно окно уже было открыто, 
+            то активируем его, а новое, которо совпадает 
+            с открытым отправляем в список для закрытия, 
+            где окно закроется как только запустится метод show у этого окна"""
             self.setActive(obj, False)
             self.list_when_show_del.append(obj)
         else:
             self.dct[h].append(obj)
+        # Если класс окна является карточкой, то добавляем в список
         if obj.__class__.__name__ == 'CardOfFilm' and \
                 obj not in self.list_when_show_del:
             self.list.append(obj)
@@ -138,6 +158,9 @@ class WindowArr(list):
         return self.list[item]
 
     def del_item(self, item):
+        """Узнаем номер, и в зависимости от того,
+        является окно родителем или нет, удаляем
+        его или из списка и словаря или только из словаря"""
         h = hash(item)
         if item.__class__.__name__ != 'CardOfFilm':
             del self.dct[h][-1]
@@ -159,6 +182,9 @@ class MyQWidget(QWidget):
             super().closeEvent(a0)
 
     def show(self):
+        """Узнаем есть ли наше окно в списке тех окон,
+        которые надо закрыть при открытии"""
+        # В зависимоти от этого или показываем окно или закрываем его
         if window_arr.check_wind_in_list(self):
             super().close()
         else:
@@ -181,6 +207,7 @@ class MyQDialog(QDialog):
             super().closeEvent(a0)
 
     def show(self):
+        # Аналогично как в классе MyQWidget
         if window_arr.check_wind_in_list(self):
             self.close()
         else:
@@ -191,7 +218,7 @@ class MyQDialog(QDialog):
 
 
 class MyPopup(QWidget):
-    """Выслывающее окно для увеличенного просомтра изображений."""
+    """Выслывающее окно для увеличенного просмотра изображений."""
     def __init__(self, parent, pixmap_path):
         super().__init__()
         self.label = QLabel(self)
@@ -202,10 +229,24 @@ class MyPopup(QWidget):
         # Установка размеров окна, и изображения
         # TODO можно поиграться с размером изображения
         #  установить может быть коэффициенты и пр
-        self.resize(parent.width() // 2, parent.height())
-        self.label.resize(self.width(), self.height())
+        # self.resize(parent.width() // 2, parent.height())
+        # self.resize(parent.width() // 2, parent.height())
+        # TODO переделать размеры
+        max_h, max_w = parent.height() * (2 / 3), parent.width() * (2 / 3)
+        p_h, p_w = pixmap.height(), pixmap.width()
+        k_h = max_h / p_h
+        k_w = max_w / p_w
+        if p_h > p_w:
+            h = max_h
+            w = p_w * k_h
+        elif p_h < p_w:
+            h = p_h * k_w
+            w = max_w
+        self.resize(w, h)
+        self.label.resize(w, h)
         self.move(parent.x() + parent.width() // 2 - self.label.width() // 2,
-                  parent.y() + parent.height() // 2 - self.label.height() // 2 + 30)
+                  parent.y() + parent.height() // 2 - self.label.height() //
+                  2 + 30)
 
         self.label.setPixmap(pixmap.scaled(self.width(), self.height(),
                                            Qt.KeepAspectRatio))
@@ -249,13 +290,11 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
             if child.widget():
                 child.widget().deleteLater()
 
-        cur = conn.cursor()
         # Запрос в базу
         request = f'''SELECT id, title, rating, genre, 
                                         year, poster from films
                                         where title like "{search_text}" {s}'''
-        rez = cur.execute(request).fetchall()
-
+        rez = db.request(request).fetchall()
         if len(rez) == 0:
             self.statusbar.showMessage('Фильмы не найдены')
         else:
@@ -269,7 +308,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
                 if i + j >= len(rez):
                     break
                 # images подразумевается как постер. т.е основная картинка
-                id, title, rating, genre, year, images = rez[i + j]
+                id_f, title, rating, genre, year, images = rez[i + j]
                 """Форматируем даные, добавляем коренную папку с картинкам"""
                 if images:
                     images = images.split(', ')
@@ -279,20 +318,20 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
                             images[img] = \
                                 f'{relative_path_for_media}{images[img]}'
                 """Создаем мини-карточку фильма"""
-                w = self.make_card_film(id, title, rating, genre, year,
+                w = self.make_card_film(id_f, title, rating, genre, year,
                                         [images, base_path_for_none_img])
                 self.layout.addWidget(w, i, j)
         # Заполняем наш виджет карточками
         self.scrollAreaWidgetContents.setLayout(self.layout)
 
-        self.setWindowTitle('Кинотеатр-0.0.1')
+        self.setWindowTitle('Кинотеатр-1.1.0')
 
-    def make_card_film(self, id, title, rating, genre, year, images):
+    def make_card_film(self, id_f, title, rating, genre, year, images):
         # Загрузка миник-карточки из ui кода сгенерированная с помощью pyuic
         w = QWidget(self)
         lo = QVBoxLayout(w)
-        lo.addWidget(self.setupUi(self, id, title, rating, genre,
-                                               year, images))
+        lo.addWidget(self.setupUi(self, id_f, title, rating, genre,
+                                  year, images))
         w.setLayout(lo)
         return w
 
@@ -313,45 +352,45 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
         Открытие окна фильтровки поиска и обновление
         главного окна в соответствии с установленными фильтрами
         """
-        cur = conn.cursor()
         # Запрос в базу
-        rez = cur.execute("""SELECT DISTINCT year, genre, rating, producer 
+        rez = db.request("""SELECT DISTINCT year, genre, rating, producer 
         from films""").fetchall()
         # Форматирование результата запроса
-        years = list(set(map(lambda x: str(x[0]), rez)))
-        genre = list(set(map(lambda x: x[1], rez)))
-
+        years = sorted(list(set(map(lambda x: str(x[0]), rez))),
+                       key=lambda x: int(x))
+        genre = sorted(list(set(map(lambda x: x[1], rez))))
         """Стоит включить, но придется настроить поиск
         Проблема состоит в том, что вместо определенных жанров, загружаются 
         сразу те, которые определенеы у фильмов"""
-        # new_genre = set()
-        # for i in genre:
-        #     arr = i.split(', ')
-        #     for j in arr:
-        #         j = j.strip('\n')
-        #         new_genre.add(j)
-        # genre = list(sorted(list(new_genre)))
-        rating = list(set(map(lambda x: str(x[2]), rez)))
+        new_genre = set()
+        for i in genre:
+            arr = i.split(', ')
+            for j in arr:
+                j = j.strip('\n')
+                new_genre.add(j)
+        genre = list(sorted(list(new_genre)))
+        rating = sorted(list(set(map(lambda x: str(x[2]), rez))),
+                        key=lambda x: float(x))
         producer = []
         for i in rez:
             name = i[3]
             if name is not None:
                 name = name.strip('\n')
                 producer.append(name)
-
+        producer = sorted(producer)
         self.filt = FilterDialog(self)
         self.filt.reload_ui(years, genre, rating, producer)
 
     def create_request_for_filter(self):
         # Возвращает сформированный запрос для базы
-        # основываясь на данных диалога
+        # основываясь на данных из окна диалога
         try:
             dct = self.filt.get_items()
             s = ''
             if dct['year'][0]:
                 s += f' and year like "{dct["year"][1]}"'
             if dct['genre'][0]:
-                s += f' and genre like "{dct["genre"][1]}"'
+                s += f' and genre like "%{dct["genre"][1]}%"'
             if dct['rating'][0]:
                 s += f' and rating like "{dct["rating"][1]}"'
             if dct['producer'][0]:
@@ -359,13 +398,13 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
                     dct['producer'][1] = 'NONE'
                 s += f' and producer like "{dct["producer"][1]}"'
             return s
-        except Exception as ex:
-            print(ex)
+        except Exception as exc:
+            print(exc)
 
     def admin_sign_in(self):
-        self.aW = AdminSignIn(self)
-        self.aW.show()
-        self.aW.exec_()
+        aw = AdminSignIn(self)
+        aw.show()
+        aw.exec_()
 
     def closeEvent(self, a0: QCloseEvent):
         if window_arr.check_for_main_w(self):
@@ -377,10 +416,21 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
         return hash(self.id)
 
 
+class Film:
+    def __init__(self):
+        self.title = ''
+        self.path_poster = None
+        self.path_image_1 = None
+        self.path_image_2 = None
+        self.path_trailer = None
+
+
 class CardOfFilm(MyQWidget):
     """Окно карточки
     Представляет просмотр информации о фильме и возможности покупки билета
     """
+    resized = QtCore.pyqtSignal()
+
     def __init__(self, parent, id_film):
         self.id = id_film
         super().__init__()
@@ -394,47 +444,76 @@ class CardOfFilm(MyQWidget):
         self.buy_ticket_btn.clicked.connect(self.buy_ticket)
         self.poster.installEventFilter(self)
         self.poster_2.installEventFilter(self)
+        self.resized.connect(self.resize_image)
+
+        # Определение некотрых переменных
+        self.Filmcl = Film()
+        self.wind = None
 
         self.load_info()
 
     def eventFilter(self, obj, event):
         """Событие, которое реагирует на нажатия кнопкой мыши на
         дополнительные изображения в карточке фильма"""
-        pixmap = None
+        pixmap_p = None
         # Получаем путь к изображениям, установленных в label в gui
         if obj == self.poster:
-            pixmap = self.path_img['poster_1']
+            pixmap_p = self.Filmcl.path_image_1
         elif obj == self.poster_2:
-            pixmap = self.path_img['poster_2']
-        if pixmap is not None:
+            pixmap_p = self.Filmcl.path_image_2
+        if pixmap_p is not None:
             if event.type() == QEvent.MouseButtonPress:
-                mouseEvent = QMouseEvent(event)
-                if mouseEvent.buttons() == Qt.LeftButton:
+                mouse_event = QMouseEvent(event)
+                if mouse_event.buttons() == Qt.LeftButton:
                     # Если левая кнопка удерживается,
                     # то открываем окно с увеличенной картинкой
-                    self.wind = MyPopup(self, pixmap)
+                    self.wind = MyPopup(self, pixmap_p)
                     self.wind.show()
             if event.type() == QEvent.MouseButtonRelease:
                 self.wind.close()
 
         return MyQWidget.eventFilter(self, obj, event)
 
+    def resizeEvent(self, event):
+        self.resized.emit()
+        return super().resizeEvent(event)
+
+    def resize_image(self):
+        """Была идея сделать мастшабируемую
+        картику в карточке фильма.
+        Но из-за технических сложностей отложили эту фичу"""
+        pass
+        # pixmap_poster = QPixmap(self.Filmcl.path_poster)
+        #
+        # max_h, max_w = self.img.height(), self.img.width()
+        # p_h, p_w = pixmap_poster.height(), pixmap_poster.width()
+        # print('max', max_h, max_w)
+        # print(p_h, p_w)
+        # k_h = max_h / p_h
+        # k_w = max_w / p_w
+        # if p_h > p_w:
+        #     h = max_h
+        #     w = p_w * k_h
+        # else:
+        #     h = p_h * k_w
+        #     w = max_w
+        # # self.img.setPixmap(pixmap_poster.scaled(int(w), int(h),
+        # #                                         Qt.KeepAspectRatio))
+        # pixSize = QSize(self.img.pixmap().size())
+        # pixSize.scale(w, h, Qt.KeepAspectRatio)
+        # self.img.setFixedSize(pixSize)
+
     def buy_ticket(self):
         """Функция, которая открывает окно для покупки билетов"""
-        bt = BuyTct(self, self.id, self.title)
+        bt = BuyTct(self, self.id, self.Filmcl.title)
         bt.show()
         bt.exec_()
 
     def load_info(self):
         """Загрузка основной информации в оставшиеся label в gui"""
-        cur = conn.cursor()
-        rez = cur.execute("""SELECT * from films
-                                        where id like ?""",
-                          (self.id,)).fetchall()[0]
-
-        self.path_img = {"poster_1": None,
-                         'poster_2': None}
-        self.title = rez[1]
+        rez = db.request("SELECT * from films where id like ?",
+                         self.id).fetchall()[0]
+        self.Filmcl.title = rez[1]
         rating = rez[2]
         genre = rez[3]
         actors = rez[4]
@@ -444,10 +523,10 @@ class CardOfFilm(MyQWidget):
         description = rez[8]
         """Под постером подразумевается основная картинка
         Под images подразумеваются кадры из фильма и тд
-        Здесь """
+        """
         poster = rez[9]
         images = rez[10]
-        self.trailer = relative_path_for_media + str(rez[11])
+        self.Filmcl.path_trailer = relative_path_for_media + str(rez[11])
 
         pixmap_poster = QPixmap(base_path_for_none_img)
         pixmap_image = QPixmap(base_path_for_none_img)
@@ -461,52 +540,54 @@ class CardOfFilm(MyQWidget):
                 if poster[img] and not poster[img].startswith('http'):
                     poster[img] = \
                         f'{relative_path_for_media}{poster[img]}'
-            if poster[0].startswith('http'):
-                pixmap_poster = load_url_img.load_image_from_url(poster[0])
-            elif os.path.isfile(poster[0]):
-                pixmap_poster = QPixmap(poster[0])
-            elif len(poster) > 1 and os.path.isfile(poster[1]):
-                pixmap_poster = QPixmap(poster[1])
-            elif len(poster) > 1 and poster[1].startswith('http'):
-                pixmap_poster = load_url_img.load_image_from_url(poster[1])
+            for path_p in poster:
+                if os.path.isfile(path_p):
+                    pixmap_poster = QPixmap(path_p)
+                    self.Filmcl.path_poster = path_p
+                    break
+                elif path_p.startswith('http'):
+                    pixmap_poster = load_url_img.load_image_from_url(path_p)
+                    self.Filmcl.path_poster = pixmap_poster
+                    break
         if images:
             images = images.split(', ')
             for img in range(len(images)):
                 if images[img] and not images[img].startswith('http'):
                     images[img] = \
                         f'{relative_path_for_media}{images[img]}'
-            if images[0].startswith('http'):
-                pixmap_image = load_url_img.load_image_from_url(images[0])
-                self.path_img["poster_1"] = images[0]
-            elif len(images) > 1 and images[1].startswith('http'):
-                pixmap_image_2 = load_url_img.load_image_from_url(images[1])
-                self.path_img["poster_2"] = images[1]
-            elif os.path.isfile(images[0]):
-                pixmap_image = QPixmap(images[0])
-                self.path_img["poster_1"] = images[0]
-            elif len(images) > 1 and os.path.isfile(images[1]):
-                pixmap_image_2 = QPixmap(images[1])
-                self.path_img["poster_2"] = images[1]
-
+            for path_p in images:
+                if os.path.isfile(path_p):
+                    if self.Filmcl.path_image_1 is None:
+                        self.Filmcl.path_image_1 = path_p
+                    elif self.Filmcl.path_image_2 is None:
+                        self.Filmcl.path_image_2 = path_p
+                    pixmap_image = QPixmap(path_p)
+                    break
+                elif path_p.startswith('http'):
+                    pixmap_image = load_url_img.load_image_from_url(path_p)
+                    if self.Filmcl.path_image_1 is None:
+                        self.Filmcl.path_image_1 = pixmap_image
+                    elif self.Filmcl.path_image_2 is None:
+                        self.Filmcl.path_image_2 = pixmap_image
+                    break
         """Установка всех данных и корректировка размеров картинок"""
         win_w, win_h = self.width(), self.height()
-
         # Загрузка фото
         w_l, h_l = self.img.width(), self.img.height()
         self.img.setPixmap(pixmap_poster.scaled(w_l + win_w // 2,
-                                         h_l + win_h // 2,
-                                         Qt.KeepAspectRatio))
+                                                h_l + win_h // 2,
+                                                Qt.KeepAspectRatio))
         self.poster.setPixmap(pixmap_image.scaled(w_l * 3, h_l * 3,
-                                                   Qt.KeepAspectRatio))
+                                                  Qt.KeepAspectRatio))
 
         self.poster_2.setPixmap(pixmap_image_2.scaled(w_l * 3, h_l * 3,
-                                                       Qt.KeepAspectRatio))
+                                                      Qt.KeepAspectRatio))
 
         # Загрузка текстовой информации
         self.year.setText(str(year))
         self.duration.setText(str(duration))
         self.description_2.setText(description)
-        self.title_2.setText(self.title)
+        self.title_2.setText(self.Filmcl.title)
         self.rating_2.setText(str(rating))
         self.genre_2.setText(genre)
         self.producer_2.setText(producer)
@@ -517,14 +598,13 @@ class CardOfFilm(MyQWidget):
         В будущем есть идея ввести открытие видео-файла по ссылке,
         чтобы не хранить видео-файл на устройстве"""
         # TODO попробовать реализовать открытие видео по ссылке
-        try:
-            if self.trailer is not None and os.path.isfile(self.trailer):
-                self.vid = TrailerWidget(self, self.trailer, self.title)
-                self.vid.show()
-            else:
-                self.statusBar.setText('Трейлер не найден')
-        except:
-            pass
+        if self.Filmcl.path_trailer is not None \
+                and os.path.isfile(self.Filmcl.path_trailer):
+            self.vid = TrailerWidget(self, self.Filmcl.path_trailer,
+                                     self.Filmcl.title)
+            self.vid.show()
+        else:
+            self.statusBar.setText('Трейлер не найден')
 
     def __hash__(self):
         return hash(int(self.id))
@@ -539,6 +619,7 @@ class BuyTct(MyQDialog):
 
         self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
         uic.loadUi(path_for_gui + 'buy_tck.ui', self)
+        self.setStyleSheet(open("styles/buy_tct_style.css", "r").read())
         self.cancel.clicked.connect(self.close)
         self.accept.clicked.connect(self.accept_action)
 
@@ -684,22 +765,17 @@ class BuyTct(MyQDialog):
     def load_other(self):
         """Загружаются оставшиеся данные в соответствии с
         выбранным кинотеатром и временем"""
-        cur = conn.cursor()
         name_c = self.cinemas_2.currentText()
         self.time_s = self.times.currentText()
 
-        rez_c = cur.execute("""SELECT * from cinemas 
-                                    where name_cinema like ?""", (
-            name_c,)).fetchall()[0]
+        rez_c = db.request("""SELECT * from cinemas 
+                                    where name_cinema like ?""",
+                           name_c).fetchall()[0]
         id_c = rez_c[0]
-        rez_f = cur.execute("""Select 
-                time_end, places, 
-                price, id, cinema_hall_id 
-                from timetable 
-                where id_film like ? 
-                and cinema_id like ? 
-                and time_start  like ?""", (
-            self.film_id, id_c, self.time_s)).fetchall()[0]
+        rez_f = db.request("""Select time_end, places, price, id, 
+        cinema_hall_id from timetable where id_film like ? and cinema_id like ? 
+                and time_start  like ?""",
+                           self.film_id, id_c, self.time_s).fetchall()[0]
         self.time_to.setText(rez_f[0])
         self.price.setText(str(rez_f[2]))
         self.places = rez_f[1].split(', ')
@@ -710,13 +786,11 @@ class BuyTct(MyQDialog):
     def load_time(self):
         """Загрузка доступного времени в
         соответствии с выбранным кинотетром из базы"""
-        cur = conn.cursor()
         name_c = self.cinemas_2.currentText()
 
         # Загрузка информации о кинотетре
-        rez_c = cur.execute("""SELECT * from cinemas 
-                            where name_cinema like ?""", (
-            name_c,)).fetchall()[0]
+        rez_c = db.request("""SELECT * from cinemas 
+                            where name_cinema like ?""", name_c).fetchall()[0]
 
         self.adress.setText(rez_c[2])
         self.phone.setText(rez_c[3])
@@ -724,9 +798,9 @@ class BuyTct(MyQDialog):
 
         # Загрузка времени
         id_c = rez_c[0]
-        rez_time = cur.execute("""SELECT time_start from timetable 
-        where id_film like ? and cinema_id like ?""", (
-            self.film_id, id_c)).fetchall()
+        rez_time = db.request("""SELECT time_start from timetable 
+        where id_film like ? and cinema_id like ?""",
+                              self.film_id, id_c).fetchall()
         if not rez_time:
             self.statusBar.setText('Данного фильма не найденно')
             return
@@ -736,10 +810,9 @@ class BuyTct(MyQDialog):
 
     def load_cinemas(self):
         # Загрузка времени и добавление в ComboBox
-        cur = conn.cursor()
         self.title.setText(self.film_title)
         self.dct_cinema = {}
-        rez = cur.execute("""SELECT id, name_cinema from cinemas""").fetchall()
+        rez = db.request("""SELECT id, name_cinema from cinemas""").fetchall()
         for i in rez:
             id, name = i[:2]
             self.dct_cinema[id] = name
@@ -747,6 +820,10 @@ class BuyTct(MyQDialog):
         self.cinemas_2.addItems(rez)
 
     def closeEvent(self, a0: QCloseEvent):
+        """Планировалось при мгновенном закрытии окна автоматически
+            сохранять билеты по указанному ранее пути
+        Но из-за особенности системы закрытия окон эта возможность
+            пока не может быть реализована"""
         # if self.isAccepted:
         #     if self.counter_places != len(self.numb):
         #         if self.path_for_tct is not None:
@@ -763,27 +840,31 @@ class BuyTct(MyQDialog):
         появляется окно с информацией о месте, времени и тд
         Кроме этого окно нельзя будет закрыть пока пользователь не нажмет на
         кнопку "Сохранить" и не выберет путь для сохранения билета"""
-        cur = conn.cursor()
-        self.isAccepted = True
-        for i in self.numb:
-            self.places[i] = '1'
-        s = f'{", ".join(self.places)}'
-        req = f'{s}'
-        cur.execute(f'''UPDATE timetable
-                        set places = ?
-                        WHERE id = ?''', (req, self.id_films_in_c))
-        conn.commit()
-        for i in range(len(self.numb)):
-            self.counter_places += 1
-            place = self.numb[i] + 1
-            self.ticket = Ticket(self, place)
-            self.ticket.show()
-        # После сохранения всех билетов отключается
-        # возможность повторного подтверждения заказа и выбора места
-        self.statusBar.setText("Билеты сохранены. Ждем вас на сеансе")
-        self.accept.setEnabled(False)
-        self.choose_place_btn.setEnabled(False)
-        self.cancel.setEnabled(False)
+        msg = QMessageBox()
+        ret = msg.question(self, 'Подтверждение заказа',
+                           "Действительно подтвердить покупку?",
+                           msg.Yes | msg.No)
+        if ret == msg.Yes:
+            self.isAccepted = True
+            for i in self.numb:
+                self.places[i] = '1'
+            s = f'{", ".join(self.places)}'
+            req = f'{s}'
+            db.request(f'''UPDATE timetable
+                            set places = ?
+                            WHERE id = ?''', req, self.id_films_in_c)
+            db.commit()
+            for i in range(len(self.numb)):
+                self.counter_places += 1
+                place = self.numb[i] + 1
+                self.ticket = Ticket(self, place)
+                self.ticket.show()
+            # После сохранения всех билетов отключается
+            # возможность повторного подтверждения заказа и выбора места
+            self.statusBar.setText("Билеты сохранены. Ждем вас на сеансе")
+            self.accept.setEnabled(False)
+            self.choose_place_btn.setEnabled(False)
+            self.cancel.setEnabled(False)
     #
     # def __hash__(self):
     #     return hash(self.parent)
@@ -798,6 +879,7 @@ class Ticket(MyQWidget):
         window_arr.append(self)
 
         uic.loadUi(path_for_gui + 'successful_purchase.ui', self)
+        self.setStyleSheet(open("styles/ticket_style.css", "r").read())
         self.pushButton.clicked.connect(self.choose_way)
 
         # Разметка
@@ -838,8 +920,12 @@ class Ticket(MyQWidget):
         global tickets_numb
         if self.BtnIsClicked:
             self.render(self.pixmap)
-            self.pixmap.save(f'{self.way}/Билет-№{tickets_numb}.jpg')
+            self.pixmap.save(f'{self.way}/'
+                             f'{self.parent.film_title}'
+                             f'-Билет-№{tickets_numb}.jpg')
             tickets_numb += 1
+            with open('tickets_numb.txt', 'w') as f:
+                f.write(str(tickets_numb))
 
     def choose_way(self):
         # Диалог выбора пути
@@ -1032,7 +1118,9 @@ class TrailerWidget(MyQWidget):
         self.parent = parent
         window_arr.append(self)
         self.ui = uic.loadUi(path_for_gui + "trailer.ui", self)
-        self.url = url
+        self.setStyleSheet(open("styles/trailer_style.css", "r").read())
+        self.url = url  # url такой: films_image/name_file.MP4
+        # print(self.url)
         self.setWindowTitle(title)
 
         # Попытки загружать через ссылки
@@ -1051,18 +1139,12 @@ class TrailerWidget(MyQWidget):
         self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.url)))
         # self.player.setMedia(QMediaContent(QUrl('https://www.youtube.com/embed/xfIQ8h2_0TI')))
         self.player.setVideoOutput(self.ui.widget)
-        self.play()
-        self.play_btn.clicked.connect(self.play)
-        self.pause_btn.clicked.connect(self.pause)
-
-    def play(self):
         self.player.play()
-
-    def pause(self):
-        self.player.pause()
+        self.play_btn.clicked.connect(self.player.play)
+        self.pause_btn.clicked.connect(self.player.pause)
 
     def closeEvent(self, a0: QCloseEvent):
-        self.player.stop()
+        self.player.pause()
         super().closeEvent(a0)
 
 
@@ -1072,10 +1154,11 @@ class FilterDialog(MyQDialog):
         self.parent = parent
         super().__init__(parent)
         uic.loadUi(path_for_gui + 'filter.ui', self)
+        self.setStyleSheet(open("styles/filter_style.css", "r").read())
         self.setWindowTitle('Настройки сортировки')
         self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
         self.buttonBox.accepted.connect(self.acept_data)
-        self.buttonBox.rejected.connect(self.reject_data)
+        self.buttonBox.rejected.connect(self.close)
         self.a = {'year': [False, ''],
                   'genre': [False, ''],
                   'rating': [False, ''],
@@ -1110,9 +1193,6 @@ class FilterDialog(MyQDialog):
         # print(self.a)
         self.close()
 
-    def reject_data(self):
-        self.close()
-
     def get_items(self):
         return self.a
 
@@ -1123,6 +1203,7 @@ class AdminSignIn(MyQDialog):
         self.parent = parent
         window_arr.append(self)
         uic.loadUi(path_for_gui + 'admin_sign_in.ui', self)
+        self.setStyleSheet(open("styles/admin_style.css", "r").read())
         self.pushButton.clicked.connect(self.acept_data)
         self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
         self.Form = parent
@@ -1168,11 +1249,9 @@ class MovieSplashScreen(QSplashScreen):
         return self.movie.scaledSize()
 
 
-# if __name__ == '__main__':
-#
-
 if __name__ == "__main__":
     window_arr = WindowArr()
+    db = DataBase('mydatabase.db')
     if not with_wind_load:
             app = QApplication(sys.argv)
             ex = MainWindow()

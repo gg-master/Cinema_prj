@@ -1,0 +1,13 @@
+QPushButton{
+    background-color: hsl(201, 32%, 44%);
+    border-radius: 10px;
+    color: white;
+    height: 20%;
+    width: 50%;
+}
+QPushButton:pressed{
+    background-color: hsl(200, 27%, 40%);
+}
+QPushButton:hover:!pressed{
+    background-color: hsl(200, 46%, 63%);
+}

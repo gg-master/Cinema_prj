@@ -25,6 +25,10 @@
   <property name="windowTitle">
    <string>Покупка билета</string>
   </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>../system_image/log2.bmp</normaloff>../system_image/log2.bmp</iconset>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout_4">
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_6">
