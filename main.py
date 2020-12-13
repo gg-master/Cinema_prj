@@ -1162,7 +1162,7 @@ class FilterDialog(MyQDialog):
         self.setStyleSheet(open("styles/filter_style.css", "r").read())
         self.setWindowTitle('Настройки сортировки')
         self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
-        self.buttonBox.accepted.connect(self.acept_data)
+        self.buttonBox.accepted.connect(self.accept_data)
         self.buttonBox.rejected.connect(self.close)
         self.a = {'year': [False, ''],
                   'genre': [False, ''],
@@ -1175,7 +1175,7 @@ class FilterDialog(MyQDialog):
         self.comboBox_3.addItems(r)
         self.comboBox_4.addItems(p)
 
-    def acept_data(self):
+    def accept_data(self):
         if self.checkBox.isChecked():
             self.a['year'] = [True, self.comboBox.currentText()]
         else:
