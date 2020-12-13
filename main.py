@@ -22,10 +22,8 @@ path_for_db = 'database\\'
 
 admin_login = 'admin'
 admin_pass = 'admin'
+
 col_in_mainWindow = 4
-
-conn = sqlite3.connect(path_for_db + "mydatabase.db")
-
 wdw = 207 * col_in_mainWindow
 wdh = 346 + 50 + 150
 
