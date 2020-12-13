@@ -19,6 +19,7 @@ relative_path_for_media = 'films_image\\'
 # print(relative_path_for_media)
 path_for_gui = 'ui_files\\'
 path_for_db = 'database\\'
+splitter_in_db = ' '
 
 admin_login = 'admin'
 admin_pass = 'admin'
@@ -311,7 +312,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
                 id_f, title, rating, genre, year, images = rez[i + j]
                 """Форматируем даные, добавляем коренную папку с картинкам"""
                 if images:
-                    images = images.split(', ')
+                    images = images.split(splitter_in_db)
                     for img in range(len(images)):
                         # Если путь является ссылкой, то не преобразуем
                         if images[img] and not images[img].startswith('http'):
@@ -535,7 +536,7 @@ class CardOfFilm(MyQWidget):
         """Загрузка изображений в соответствии с тем, явлется путь 
         ссылкой на картинку или это путь к локальному файлу"""
         if poster:
-            poster = poster.split(', ')
+            poster = poster.split(splitter_in_db)
             for img in range(len(poster)):
                 if poster[img] and not poster[img].startswith('http'):
                     poster[img] = \
@@ -550,26 +551,30 @@ class CardOfFilm(MyQWidget):
                     self.Filmcl.path_poster = pixmap_poster
                     break
         if images:
-            images = images.split(', ')
+            images = images.split(splitter_in_db)
             for img in range(len(images)):
                 if images[img] and not images[img].startswith('http'):
                     images[img] = \
                         f'{relative_path_for_media}{images[img]}'
             for path_p in images:
+                if self.Filmcl.path_image_1 is not None \
+                        and self.Filmcl.path_image_2 is not None:
+                    break
                 if os.path.isfile(path_p):
                     if self.Filmcl.path_image_1 is None:
                         self.Filmcl.path_image_1 = path_p
+                        pixmap_image = QPixmap(path_p)
                     elif self.Filmcl.path_image_2 is None:
                         self.Filmcl.path_image_2 = path_p
-                    pixmap_image = QPixmap(path_p)
-                    break
+                        pixmap_image_2 = QPixmap(path_p)
                 elif path_p.startswith('http'):
-                    pixmap_image = load_url_img.load_image_from_url(path_p)
                     if self.Filmcl.path_image_1 is None:
+                        pixmap_image = load_url_img.load_image_from_url(path_p)
                         self.Filmcl.path_image_1 = pixmap_image
                     elif self.Filmcl.path_image_2 is None:
-                        self.Filmcl.path_image_2 = pixmap_image
-                    break
+                        pixmap_image_2 = load_url_img.load_image_from_url(
+                            path_p)
+                        self.Filmcl.path_image_2 = pixmap_image_2
         """Установка всех данных и корректировка размеров картинок"""
         win_w, win_h = self.width(), self.height()
         # Загрузка фото
