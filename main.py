@@ -29,7 +29,7 @@ conn = sqlite3.connect(path_for_db + "mydatabase.db")
 wdw = 207 * col_in_mainWindow
 wdh = 346 + 50 + 150
 
-tickets_numb = 0
+tickets_numb = int(open('tickets_numb.txt', 'r').read())
 
 
 def my_exception_hook(exctype, value, traceback):
@@ -550,6 +550,7 @@ class CardOfFilm(MyQWidget):
                 elif path_p.startswith('http'):
                     pixmap_poster = load_url_img.load_image_from_url(path_p)
                     self.Filmcl.path_poster = pixmap_poster
+                    break
         if images:
             images = images.split(', ')
             for img in range(len(images)):
@@ -921,8 +922,12 @@ class Ticket(MyQWidget):
         global tickets_numb
         if self.BtnIsClicked:
             self.render(self.pixmap)
-            self.pixmap.save(f'{self.way}/Билет-№{tickets_numb}.jpg')
+            self.pixmap.save(f'{self.way}/'
+                             f'{self.parent.film_title}'
+                             f'-Билет-№{tickets_numb}.jpg')
             tickets_numb += 1
+            with open('tickets_numb.txt', 'w') as f:
+                f.write(str(tickets_numb))
 
     def choose_way(self):
         # Диалог выбора пути

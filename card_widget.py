@@ -44,6 +44,15 @@ class Ui_Form(object):
         #
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.widget)
         self.image_label = QtWidgets.QLabel(Form)
+
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred,
+                                           QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(
+            self.image_label.sizePolicy().hasHeightForWidth())
+        self.image_label.setSizePolicy(sizePolicy)
+
         self.image_label.setAlignment(QtCore.Qt.AlignCenter)
         self.verticalLayout_2.addWidget(self.image_label)
         self.verticalLayout = QtWidgets.QVBoxLayout()
