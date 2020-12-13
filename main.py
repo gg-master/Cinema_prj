@@ -1209,11 +1209,11 @@ class AdminSignIn(MyQDialog):
         window_arr.append(self)
         uic.loadUi(path_for_gui + 'admin_sign_in.ui', self)
         self.setStyleSheet(open("styles/admin_style.css", "r").read())
-        self.pushButton.clicked.connect(self.acept_data)
+        self.pushButton.clicked.connect(self.accept_data)
         self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
         self.Form = parent
 
-    def acept_data(self):
+    def accept_data(self):
         # TODO вставить открытие интерфейса для админа
         # Открываем Интрефейс для админа
         if admin_login == self.lineEdit.text() and \
