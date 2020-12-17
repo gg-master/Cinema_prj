@@ -366,7 +366,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
             if name is not None:
                 name = name.strip('\n')
                 producer.append(name)
-        producer = sorted(producer)
+        producer = sorted(set(producer))
         self.filt = FilterDialog(self)
         self.filt.reload_ui(years, genre, rating, producer)
 
