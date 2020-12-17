@@ -1084,21 +1084,25 @@ class ChooseSeat(MyQDialog):
         # при закрытии окна узнаем какие кнопки были выбраны и
         # сохраняем их в список
         buttons = self.bG.buttons()
+        self.numb_of_choose_btn = []
         for btn in buttons:
             if btn.isSelected:
                 self.numb_of_choose_btn.append(int(btn.text()) - 1)
-        self.close()
+        super().closeEvent(QCloseEvent())
 
     def set_default_places(self):
         # при закрытии окна с помощью кнопки "отмена"
         # восстанавливаются ранее выбранные кнопки
         if self.isSelected:
             self.numb_of_choose_btn = self.last_num_of_choose_btn
-        self.close()
+        super().closeEvent(QCloseEvent())
 
     def get_btn_numb(self):
         if self.numb_of_choose_btn:
             return self.numb_of_choose_btn
+
+    def closeEvent(self, a0: QCloseEvent):
+        self.set_default_places()
 
 
 class TrailerWidget(MyQWidget):
