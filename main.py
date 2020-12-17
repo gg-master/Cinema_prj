@@ -42,19 +42,6 @@ def my_exception_hook(exctype, value, traceback):
 # Set the exception hook to our wrapping function
 sys.excepthook = my_exception_hook
 
-'''
-    Переопределение классов использовалось для реализации закрытия окон
-    
-    Использованы две реализации закрытия форм:
-    1) Когда при закрытии родительского окна закрыватся все дочернии окна
-    Реализовано через добавление всех форм в список window_arr
-    2) Когда при открытом дочернем окне не возможно будет закрыть 
-    родительское окно
-    Реализовано также через window_arr
-
-    См закомментированный и не закоментированный методы ниже
-'''
-
 
 class DataBase:
     def __init__(self, name_db):
@@ -139,7 +126,8 @@ class WindowArr(list):
             # Если окна нет, то понимаем,
             # что оно является родителем, и создаем новый элемент в словаре
             self.dct[h] = [obj]
-        elif h in self.dct and obj.__class__.__name__ in \
+        elif h in self.dct and obj.__class__.__name__ != 'Ticket' \
+                and obj.__class__.__name__ in \
                 list(map(lambda x: x.__class__.__name__, self.dct[h])):
             # print(obj, h)
             """Если подобно окно уже было открыто, 
@@ -635,7 +623,6 @@ class BuyTct(MyQDialog):
 
         self.film_id = id
         self.film_title = title
-        self.counter_places = 0
         self.path_for_tct = None
         self.isAccepted = False
 
@@ -860,7 +847,6 @@ class BuyTct(MyQDialog):
                             WHERE id = ?''', req, self.id_films_in_c)
             db.commit()
             for i in range(len(self.numb)):
-                self.counter_places += 1
                 place = self.numb[i] + 1
                 self.ticket = Ticket(self, place)
                 self.ticket.show()
@@ -908,7 +894,6 @@ class Ticket(MyQWidget):
         qp.drawPixmap(QPoint(360, 175), qrcode)
         qp.end()
 
-        # 321 175
         self.BtnIsClicked = btn_for_auto_save
         self.label.setPixmap(self.pixmap)
 
@@ -916,7 +901,8 @@ class Ticket(MyQWidget):
         """Возврадащет сгенеррированный Qrcode как объект Qpixmap"""
         import qrcode
         from numpy import unicode
-        text = unicode('Билет подтвержден')
+        text = unicode(f'Билет на фильм '
+                       f'"{self.parent.film_title}" - Подтвержден')
         return qrcode.make(text, image_factory=QRcode.Image).pixmap()
 
     def save_tct(self):
