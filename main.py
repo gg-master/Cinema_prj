@@ -247,7 +247,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
         self.id = 0
         super().__init__(parent)
         window_arr.append(self)
-        self.setStyleSheet(open("styles/main_wind.css", "r").read())
+        # self.setStyleSheet(open("styles/main_wind.css", "r").read())
         uic.loadUi(path_for_gui + "main_window.ui", self)
 
         # Установка минимальных размеров окна
@@ -1198,7 +1198,7 @@ class AdminSignIn(MyQDialog):
         self.parent = parent
         window_arr.append(self)
         uic.loadUi(path_for_gui + 'admin_sign_in.ui', self)
-        self.setStyleSheet(open("styles/admin_style.css", "r").read())
+        # self.setStyleSheet(open("styles/admin_style.css", "r").read())
         self.pushButton.clicked.connect(self.accept_data)
         self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
         self.Form = parent
