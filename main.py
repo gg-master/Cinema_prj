@@ -19,6 +19,7 @@ relative_path_for_media = 'films_image\\'
 # print(relative_path_for_media)
 path_for_gui = 'ui_files\\'
 path_for_db = 'database\\'
+splitter_in_db = ' '
 
 admin_login = 'admin'
 admin_pass = 'admin'
@@ -40,19 +41,6 @@ def my_exception_hook(exctype, value, traceback):
 
 # Set the exception hook to our wrapping function
 sys.excepthook = my_exception_hook
-
-'''
-    Переопределение классов использовалось для реализации закрытия окон
-    
-    Использованы две реализации закрытия форм:
-    1) Когда при закрытии родительского окна закрыватся все дочернии окна
-    Реализовано через добавление всех форм в список window_arr
-    2) Когда при открытом дочернем окне не возможно будет закрыть 
-    родительское окно
-    Реализовано также через window_arr
-
-    См закомментированный и не закоментированный методы ниже
-'''
 
 
 class DataBase:
@@ -138,7 +126,8 @@ class WindowArr(list):
             # Если окна нет, то понимаем,
             # что оно является родителем, и создаем новый элемент в словаре
             self.dct[h] = [obj]
-        elif h in self.dct and obj.__class__.__name__ in \
+        elif h in self.dct and obj.__class__.__name__ != 'Ticket' \
+                and obj.__class__.__name__ in \
                 list(map(lambda x: x.__class__.__name__, self.dct[h])):
             # print(obj, h)
             """Если подобно окно уже было открыто, 
@@ -258,7 +247,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
         self.id = 0
         super().__init__(parent)
         window_arr.append(self)
-        self.setStyleSheet(open("styles/main_wind.css", "r").read())
+        # self.setStyleSheet(open("styles/main_wind.css", "r").read())
         uic.loadUi(path_for_gui + "main_window.ui", self)
 
         # Установка минимальных размеров окна
@@ -311,7 +300,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
                 id_f, title, rating, genre, year, images = rez[i + j]
                 """Форматируем даные, добавляем коренную папку с картинкам"""
                 if images:
-                    images = images.split(', ')
+                    images = images.split(splitter_in_db)
                     for img in range(len(images)):
                         # Если путь является ссылкой, то не преобразуем
                         if images[img] and not images[img].startswith('http'):
@@ -377,7 +366,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
             if name is not None:
                 name = name.strip('\n')
                 producer.append(name)
-        producer = sorted(producer)
+        producer = sorted(set(producer))
         self.filt = FilterDialog(self)
         self.filt.reload_ui(years, genre, rating, producer)
 
@@ -535,7 +524,7 @@ class CardOfFilm(MyQWidget):
         """Загрузка изображений в соответствии с тем, явлется путь 
         ссылкой на картинку или это путь к локальному файлу"""
         if poster:
-            poster = poster.split(', ')
+            poster = poster.split(splitter_in_db)
             for img in range(len(poster)):
                 if poster[img] and not poster[img].startswith('http'):
                     poster[img] = \
@@ -550,26 +539,30 @@ class CardOfFilm(MyQWidget):
                     self.Filmcl.path_poster = pixmap_poster
                     break
         if images:
-            images = images.split(', ')
+            images = images.split(splitter_in_db)
             for img in range(len(images)):
                 if images[img] and not images[img].startswith('http'):
                     images[img] = \
                         f'{relative_path_for_media}{images[img]}'
             for path_p in images:
+                if self.Filmcl.path_image_1 is not None \
+                        and self.Filmcl.path_image_2 is not None:
+                    break
                 if os.path.isfile(path_p):
                     if self.Filmcl.path_image_1 is None:
                         self.Filmcl.path_image_1 = path_p
+                        pixmap_image = QPixmap(path_p)
                     elif self.Filmcl.path_image_2 is None:
                         self.Filmcl.path_image_2 = path_p
-                    pixmap_image = QPixmap(path_p)
-                    break
+                        pixmap_image_2 = QPixmap(path_p)
                 elif path_p.startswith('http'):
-                    pixmap_image = load_url_img.load_image_from_url(path_p)
                     if self.Filmcl.path_image_1 is None:
+                        pixmap_image = load_url_img.load_image_from_url(path_p)
                         self.Filmcl.path_image_1 = pixmap_image
                     elif self.Filmcl.path_image_2 is None:
-                        self.Filmcl.path_image_2 = pixmap_image
-                    break
+                        pixmap_image_2 = load_url_img.load_image_from_url(
+                            path_p)
+                        self.Filmcl.path_image_2 = pixmap_image_2
         """Установка всех данных и корректировка размеров картинок"""
         win_w, win_h = self.width(), self.height()
         # Загрузка фото
@@ -630,7 +623,6 @@ class BuyTct(MyQDialog):
 
         self.film_id = id
         self.film_title = title
-        self.counter_places = 0
         self.path_for_tct = None
         self.isAccepted = False
 
@@ -855,7 +847,6 @@ class BuyTct(MyQDialog):
                             WHERE id = ?''', req, self.id_films_in_c)
             db.commit()
             for i in range(len(self.numb)):
-                self.counter_places += 1
                 place = self.numb[i] + 1
                 self.ticket = Ticket(self, place)
                 self.ticket.show()
@@ -903,7 +894,6 @@ class Ticket(MyQWidget):
         qp.drawPixmap(QPoint(360, 175), qrcode)
         qp.end()
 
-        # 321 175
         self.BtnIsClicked = btn_for_auto_save
         self.label.setPixmap(self.pixmap)
 
@@ -911,7 +901,8 @@ class Ticket(MyQWidget):
         """Возврадащет сгенеррированный Qrcode как объект Qpixmap"""
         import qrcode
         from numpy import unicode
-        text = unicode('Билет подтвержден')
+        text = unicode(f'Билет на фильм '
+                       f'"{self.parent.film_title}" - Подтвержден')
         return qrcode.make(text, image_factory=QRcode.Image).pixmap()
 
     def save_tct(self):
@@ -1093,21 +1084,25 @@ class ChooseSeat(MyQDialog):
         # при закрытии окна узнаем какие кнопки были выбраны и
         # сохраняем их в список
         buttons = self.bG.buttons()
+        self.numb_of_choose_btn = []
         for btn in buttons:
             if btn.isSelected:
                 self.numb_of_choose_btn.append(int(btn.text()) - 1)
-        self.close()
+        super().closeEvent(QCloseEvent())
 
     def set_default_places(self):
         # при закрытии окна с помощью кнопки "отмена"
         # восстанавливаются ранее выбранные кнопки
         if self.isSelected:
             self.numb_of_choose_btn = self.last_num_of_choose_btn
-        self.close()
+        super().closeEvent(QCloseEvent())
 
     def get_btn_numb(self):
         if self.numb_of_choose_btn:
             return self.numb_of_choose_btn
+
+    def closeEvent(self, a0: QCloseEvent):
+        self.set_default_places()
 
 
 class TrailerWidget(MyQWidget):
@@ -1157,7 +1152,7 @@ class FilterDialog(MyQDialog):
         self.setStyleSheet(open("styles/filter_style.css", "r").read())
         self.setWindowTitle('Настройки сортировки')
         self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
-        self.buttonBox.accepted.connect(self.acept_data)
+        self.buttonBox.accepted.connect(self.accept_data)
         self.buttonBox.rejected.connect(self.close)
         self.a = {'year': [False, ''],
                   'genre': [False, ''],
@@ -1170,7 +1165,7 @@ class FilterDialog(MyQDialog):
         self.comboBox_3.addItems(r)
         self.comboBox_4.addItems(p)
 
-    def acept_data(self):
+    def accept_data(self):
         if self.checkBox.isChecked():
             self.a['year'] = [True, self.comboBox.currentText()]
         else:
@@ -1203,12 +1198,12 @@ class AdminSignIn(MyQDialog):
         self.parent = parent
         window_arr.append(self)
         uic.loadUi(path_for_gui + 'admin_sign_in.ui', self)
-        self.setStyleSheet(open("styles/admin_style.css", "r").read())
-        self.pushButton.clicked.connect(self.acept_data)
+        # self.setStyleSheet(open("styles/admin_style.css", "r").read())
+        self.pushButton.clicked.connect(self.accept_data)
         self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
         self.Form = parent
 
-    def acept_data(self):
+    def accept_data(self):
         # TODO вставить открытие интерфейса для админа
         # Открываем Интрефейс для админа
         if admin_login == self.lineEdit.text() and \

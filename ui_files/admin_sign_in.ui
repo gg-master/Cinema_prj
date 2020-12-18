@@ -17,7 +17,28 @@
    <iconset>
     <normaloff>../system_image/log2.bmp</normaloff>../system_image/log2.bmp</iconset>
   </property>
+  <property name="styleSheet">
+   <string notr="true">QPushButton{
+    background-color: hsl(201, 32%, 44%);
+    border-radius: 4px;
+    color: white;
+    width: 110%;
+    height: 25px;
+}
+QPushButton:pressed{
+    background-color: hsl(200, 27%, 40%);
+}
+QPushButton:hover:!pressed{
+    background-color: hsl(200, 46%, 63%);
+}</string>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>3</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
    <item>
     <layout class="QFormLayout" name="formLayout">
      <item row="0" column="0">
