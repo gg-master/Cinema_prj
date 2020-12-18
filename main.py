@@ -1,7 +1,6 @@
 import sys
 import sqlite3
 import os
-import requests
 
 import card_widget
 from PyQt5 import uic
@@ -24,11 +23,6 @@ splitter_in_db = ' '
 
 admin_login = 'admin'
 admin_pass = 'admin'
-
-HEADERS = {'user-agent': 'Mozilla/5.0 '
-                         '(Windows NT 10.0; Win64; '
-                         'x64; rv:71.0) '
-                         'Gecko/20100101 Firefox/71.0', 'accept': '*/*'}
 
 col_in_mainWindow = 4
 wdw = 207 * col_in_mainWindow
@@ -413,18 +407,6 @@ class Film:
         self.path_image_1 = None
         self.path_image_2 = None
         self.path_trailer = None
-
-
-def get_html(url, params=None):
-    r = requests.get(url, headers=HEADERS, params=params)
-    return r
-
-
-def parse(url):
-    html = get_html(url)
-    if html.status_code == 200:
-        return True
-    return False
 
 
 class CardOfFilm(MyQWidget):
