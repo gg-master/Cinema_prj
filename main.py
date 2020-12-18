@@ -1,6 +1,7 @@
 import sys
 import sqlite3
 import os
+import requests
 
 import card_widget
 from PyQt5 import uic
@@ -23,6 +24,11 @@ splitter_in_db = ' '
 
 admin_login = 'admin'
 admin_pass = 'admin'
+
+HEADERS = {'user-agent': 'Mozilla/5.0 '
+                         '(Windows NT 10.0; Win64; '
+                         'x64; rv:71.0) '
+                         'Gecko/20100101 Firefox/71.0', 'accept': '*/*'}
 
 col_in_mainWindow = 4
 wdw = 207 * col_in_mainWindow
@@ -216,11 +222,6 @@ class MyPopup(QWidget):
         # Загрузка изображения
         pixmap = QPixmap(pixmap_path)
         # Установка размеров окна, и изображения
-        # TODO можно поиграться с размером изображения
-        #  установить может быть коэффициенты и пр
-        # self.resize(parent.width() // 2, parent.height())
-        # self.resize(parent.width() // 2, parent.height())
-        # TODO переделать размеры
         max_h, max_w = parent.height() * (2 / 3), parent.width() * (2 / 3)
         p_h, p_w = pixmap.height(), pixmap.width()
         k_h = max_h / p_h
@@ -414,6 +415,18 @@ class Film:
         self.path_trailer = None
 
 
+def get_html(url, params=None):
+    r = requests.get(url, headers=HEADERS, params=params)
+    return r
+
+
+def parse(url):
+    html = get_html(url)
+    if html.status_code == 200:
+        return True
+    return False
+
+
 class CardOfFilm(MyQWidget):
     """Окно карточки
     Представляет просмотр информации о фильме и возможности покупки билета
@@ -515,7 +528,7 @@ class CardOfFilm(MyQWidget):
         """
         poster = rez[9]
         images = rez[10]
-        self.Filmcl.path_trailer = relative_path_for_media + str(rez[11])
+        self.Filmcl.path_trailer = self.setTrailerPath(str(rez[11]))
 
         pixmap_poster = QPixmap(base_path_for_none_img)
         pixmap_image = QPixmap(base_path_for_none_img)
@@ -586,13 +599,21 @@ class CardOfFilm(MyQWidget):
         self.producer_2.setText(producer)
         self.actors_2.setText(actors)
 
+    def setTrailerPath(self, name):
+        """Узнаем является ли файл локальным или путем является ссылка
+        !!! Не реализована проверка валидности файла,
+        при условии, что ссылка файла побита"""
+        if name != 'None':
+            import validators
+            if name.startswith('http') and validators.url(name):
+                return name
+            elif os.path.isfile(relative_path_for_media + name):
+                return relative_path_for_media + name
+        return None
+
     def play_trailer(self):
-        """Открывает окно по ссылке на локальный файл
-        В будущем есть идея ввести открытие видео-файла по ссылке,
-        чтобы не хранить видео-файл на устройстве"""
-        # TODO попробовать реализовать открытие видео по ссылке
-        if self.Filmcl.path_trailer is not None \
-                and os.path.isfile(self.Filmcl.path_trailer):
+        """Открывает окно по ссылке на файл"""
+        if self.Filmcl.path_trailer is not None:
             self.vid = TrailerWidget(self, self.Filmcl.path_trailer,
                                      self.Filmcl.title)
             self.vid.show()
@@ -1118,21 +1139,8 @@ class TrailerWidget(MyQWidget):
         # print(self.url)
         self.setWindowTitle(title)
 
-        # Попытки загружать через ссылки
-        # playlist = QMediaPlaylist()
-        # playlist.addMedia(QUrl("http://example.com/movie1.mp4"))
-        #
-        # player = QMediaPlayer()
-        # player.setPlaylist(playlist)
-        #
-        # videoWidget = QVideoWidget()
-        # player.setVideoOutput(videoWidget)
-        # videoWidget.show()
-        #
-        # player.play()
         self.player = QMediaPlayer(None, QMediaPlayer.VideoSurface)
         self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.url)))
-        # self.player.setMedia(QMediaContent(QUrl('https://www.youtube.com/embed/xfIQ8h2_0TI')))
         self.player.setVideoOutput(self.ui.widget)
         self.player.play()
         self.play_btn.clicked.connect(self.player.play)
