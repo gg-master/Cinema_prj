@@ -1,6 +1,6 @@
 from PyQt5 import uic
 from PyQt5.Qt import *
-from main import MyQDialog
+from project_film.main import MyQDialog
 
 admin_login = 'admin'
 admin_pass = 'admin'

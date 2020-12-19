@@ -1,11 +1,11 @@
 import sys
 import sqlite3
 
-import card_widget
+from project_film import card_widget
 from PyQt5 import uic
 from PyQt5.Qt import *
 import time
-from Windows_classes.WindowArr_class import WindowArr
+from WindowArr_class import WindowArr
 
 
 # Settings
@@ -183,7 +183,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
         return w
 
     def open_card(self):
-        from Windows_classes.CardOfFilm_classes import CardOfFilm
+        from CardOfFilm_classes import CardOfFilm
         self.card = CardOfFilm(self, self.sender().id, window_arr)
         self.card.show()
 
@@ -250,7 +250,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
             print(exc)
 
     def admin_sign_in(self):
-        from Windows_classes.Admin_part import AdminSignIn
+        from Admin_part import AdminSignIn
         aw = AdminSignIn(self, window_arr)
         aw.show()
         aw.exec_()

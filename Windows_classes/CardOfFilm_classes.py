@@ -1,4 +1,4 @@
-from main import MyQWidget, MyQDialog, DataBase
+from project_film.main import MyQWidget, MyQDialog, DataBase
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5 import uic
 from PyQt5.Qt import *
