@@ -91,7 +91,7 @@ class MyQDialog(QDialog):
     def show(self):
         # Аналогично как в классе MyQWidget
         if self.window_arr.check_wind_in_list(self):
-            self.close()
+            super().close()
         else:
             super().show()
 
@@ -253,7 +253,6 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
         from Admin_part import AdminSignIn
         aw = AdminSignIn(self, window_arr)
         aw.show()
-        aw.exec_()
 
     def closeEvent(self, a0: QCloseEvent):
         if window_arr.check_for_main_w(self):

@@ -108,7 +108,6 @@ class CardOfFilm(MyQWidget):
         """Функция, которая открывает окно для покупки билетов"""
         bt = BuyTct(self, self.id, self.Filmcl.title)
         bt.show()
-        bt.exec_()
 
     def load_info(self):
         """Загрузка основной информации в оставшиеся label в gui"""
@@ -310,7 +309,6 @@ class BuyTct(MyQDialog):
             if self.accept.isEnabled() and self.numb is not None:
                 cs.set_selected_btn(self.numb, isSelected=True)
             cs.show()
-            cs.exec_()
             """Получаем номера кресел и если все в норме, 
             то разрешаем пользователю подтвердить заказ"""
             self.numb = cs.get_btn_numb()
@@ -781,6 +779,3 @@ class Ticket(MyQWidget):
         else:
             a0.ignore()
             self.statusBar.setText('Выберите путь для сохранения')
-
-
-
