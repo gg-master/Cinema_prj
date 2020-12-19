@@ -3,8 +3,6 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5 import uic
 from PyQt5.Qt import *
 import os
-import load_url_img
-import QRcode
 
 db = DataBase('mydatabase.db')
 
@@ -203,8 +201,10 @@ class CardOfFilm(MyQWidget):
         !!! Не реализована проверка валидности файла,
         при условии, что ссылка файла побита"""
         if name != 'None':
-            import validators
-            if name.startswith('http') and validators.url(name):
+            import requests
+            r = requests.head(name)
+            # print(r.status_code)
+            if name.startswith('http') and 200 <= r.status_code < 400:
                 return name
             elif os.path.isfile(relative_path_for_media + name):
                 return relative_path_for_media + name
@@ -779,3 +779,7 @@ class Ticket(MyQWidget):
         else:
             a0.ignore()
             self.statusBar.setText('Выберите путь для сохранения')
+
+
+if __name__ == '__main__':
+    print('Not main code')
