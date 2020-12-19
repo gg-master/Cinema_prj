@@ -5,7 +5,7 @@ import card_widget
 from PyQt5 import uic
 from PyQt5.Qt import *
 import time
-from WindowArr_class import WindowArr
+from Windows_classes.WindowArr_class import WindowArr
 
 
 # Settings
@@ -183,9 +183,8 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
         return w
 
     def open_card(self):
-        import CardOfFilm_classes
-        self.card = \
-            CardOfFilm_classes.CardOfFilm(self, self.sender().id, window_arr)
+        from Windows_classes.CardOfFilm_classes import CardOfFilm
+        self.card = CardOfFilm(self, self.sender().id, window_arr)
         self.card.show()
 
     def filter_wind_open(self):
@@ -251,8 +250,8 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
             print(exc)
 
     def admin_sign_in(self):
-        import Admin_part
-        aw = Admin_part.AdminSignIn(self, window_arr)
+        from Windows_classes.Admin_part import AdminSignIn
+        aw = AdminSignIn(self, window_arr)
         aw.show()
         aw.exec_()
 
