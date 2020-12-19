@@ -4,14 +4,16 @@ from PyQt5 import uic
 from PyQt5.Qt import *
 import os
 
-db = DataBase('mydatabase.db')
+if __name__ == '__main__':
+    exit(print('Its not working now'))
 
+db = DataBase('mydatabase.db')
 path_for_gui = 'ui_files\\'
 base_path_for_none_img = r'system_image\none_img.jpg'
 path_for_system_img = 'system_image\\'
 relative_path_for_media = 'films_image\\'
 splitter_in_db = ' '
-tickets_numb = int(open('tickets_numb.txt', 'r').read())
+tickets_numb = int(open('ticket_numb.txt', 'r').read())
 
 
 class Film:
@@ -781,5 +783,4 @@ class Ticket(MyQWidget):
             self.statusBar.setText('Выберите путь для сохранения')
 
 
-if __name__ == '__main__':
-    print('Not main code')
+
