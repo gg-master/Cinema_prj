@@ -13,7 +13,7 @@ base_path_for_none_img = r'system_image\none_img.jpg'
 path_for_system_img = 'system_image\\'
 relative_path_for_media = 'films_image\\'
 splitter_in_db = ' '
-tickets_numb = int(open('ticket_numb.txt', 'r').read())
+tickets_numb = int(open('tickets_numb.txt', 'r').read())
 
 
 class Film:
