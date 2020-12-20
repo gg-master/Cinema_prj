@@ -183,9 +183,11 @@ class AddSessionDialog(MyQDialog):
                                                   where (cinema_id = {cinema_id}
                                                   and cinema_hall_id = {hall_id})""").fetchall()))
         i = 0
-        while time_s > timetable[i][0]:
+        while i < len(timetable) and time_s > timetable[i][0]:
             i += 1
-        if self.pushButton.text() == 'Добавить' and not(timetable[i - 1][1] < time_s and time_e < timetable[i][0]):
+        if self.pushButton.text() == 'Добавить' and not(timetable[i - 1][1] < time_s and (i < len(timetable)
+                                                                                          and time_e < timetable[i][0])
+                                                        or (i >= len(timetable))):
             self.label_7.setText('Неправильный формат ввода')
             return
         if not (price.isnumeric() and int(price) > 0):
@@ -366,11 +368,9 @@ class MyWidget(QMainWindow):
         # mdf.exec_()
         data = mdf.get_items()
         if data:
-            max_id = cur.execute("""select max(id) from films""").fetchone()[0]
-            cur = self.con.cursor()
             cur.execute("""INSERT INTO films(id, title, rating, genre, actors, producer, year,
                            duration, description, poster, images, trailer, cinema_id) VALUES(
-                           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", (max_id + 1, *[i for i in data]))
+                           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", [i for i in data])
             self.con.commit()
             self.update_films()
 
