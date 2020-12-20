@@ -196,7 +196,7 @@ class AddSessionDialog(MyQDialog):
         places = ', '.join(['0'] * self.con.execute(f"""SELECT number_of_sits
                                                         from cinema_hall where (cinema_id = {cinema_id}
                                                         and cinema_hall_id = {hall_id})""").fetchone()[0])
-        self.arr = [cinema_id, hall_id, film_id, time_e, time_s, places, price]
+        self.arr = [cinema_id, hall_id, film_id, time_s, time_e, places, price]
         self.close()
 
     def get_items(self):
