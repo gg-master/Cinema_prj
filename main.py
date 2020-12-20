@@ -5,7 +5,7 @@ from project_film import card_widget
 from PyQt5 import uic
 from PyQt5.Qt import *
 import time
-from WindowArr_class import WindowArr
+from project_film.WindowArr_class import WindowArr
 
 
 # Settings
@@ -183,7 +183,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
         return w
 
     def open_card(self):
-        from CardOfFilm_classes import CardOfFilm
+        from project_film.CardOfFilm_classes import CardOfFilm
         self.card = CardOfFilm(self, self.sender().id, window_arr)
         self.card.show()
 
@@ -250,7 +250,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
             print(exc)
 
     def admin_sign_in(self):
-        from Admin_part import AdminSignIn
+        from project_film.Admin_part import AdminSignIn
         aw = AdminSignIn(self, window_arr)
         aw.show()
 
