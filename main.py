@@ -79,24 +79,27 @@ class MyQDialog(QDialog):
     def __init__(self, *args, window_ar):
         super().__init__(*args)
         self.window_arr = window_ar
+        self.setModal(True)
 
-    def closeEvent(self, a0: QCloseEvent):
-        if self.window_arr.check_window(self):
-            self.window_arr.setActive(self, False)
-            a0.ignore()
-        else:
-            self.window_arr.del_item(self)
-            super().closeEvent(a0)
-
-    def show(self):
-        # Аналогично как в классе MyQWidget
-        if self.window_arr.check_wind_in_list(self):
-            super().close()
-        else:
-            super().show()
-
-    def __hash__(self):
-        return hash(self.parent)
+    """Для виджета этот кусок кода вполне 
+    удовлетворительно выполняет функция setModal в QDialog"""
+    # def closeEvent(self, a0: QCloseEvent):
+    #     if self.window_arr.check_window(self):
+    #         self.window_arr.setActive(self, False)
+    #         a0.ignore()
+    #     else:
+    #         self.window_arr.del_item(self)
+    #         super().closeEvent(a0)
+    #
+    # def show(self):
+    #     # Аналогично как в классе MyQWidget
+    #     if self.window_arr.check_wind_in_list(self):
+    #         super().close()
+    #     else:
+    #         super().show()
+    #
+    # def __hash__(self):
+    #     return hash(self.parent)
 
 
 class MainWindow(QMainWindow, card_widget.Ui_Form):
@@ -190,8 +193,6 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
     def filter_wind_open(self):
         window_arr.append(self.filt)
         self.filt.show()
-        # Добавление в список для реализации закрытия окон
-
         self.filt.exec_()
         self.load_films()
 
@@ -253,6 +254,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
         from project_film.Admin_part import AdminSignIn
         aw = AdminSignIn(self, window_arr)
         aw.show()
+        aw.exec_()
 
     def closeEvent(self, a0: QCloseEvent):
         if window_arr.check_for_main_w(self):
