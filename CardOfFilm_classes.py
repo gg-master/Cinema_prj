@@ -3,11 +3,11 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5 import uic
 from PyQt5.Qt import *
 import os
-import load_url_img
-import QRcode
+
+if __name__ == '__main__':
+    exit(print('Its not working now'))
 
 db = DataBase('mydatabase.db')
-
 path_for_gui = 'ui_files\\'
 base_path_for_none_img = r'system_image\none_img.jpg'
 path_for_system_img = 'system_image\\'
@@ -108,7 +108,6 @@ class CardOfFilm(MyQWidget):
         """Функция, которая открывает окно для покупки билетов"""
         bt = BuyTct(self, self.id, self.Filmcl.title)
         bt.show()
-        bt.exec_()
 
     def load_info(self):
         """Загрузка основной информации в оставшиеся label в gui"""
@@ -203,8 +202,10 @@ class CardOfFilm(MyQWidget):
         !!! Не реализована проверка валидности файла,
         при условии, что ссылка файла побита"""
         if name != 'None':
-            import validators
-            if name.startswith('http') and validators.url(name):
+            import requests
+            r = requests.head(name)
+            # print(r.status_code)
+            if name.startswith('http') and 200 <= r.status_code < 400:
                 return name
             elif os.path.isfile(relative_path_for_media + name):
                 return relative_path_for_media + name
@@ -308,7 +309,6 @@ class BuyTct(MyQDialog):
             if self.accept.isEnabled() and self.numb is not None:
                 cs.set_selected_btn(self.numb, isSelected=True)
             cs.show()
-            cs.exec_()
             """Получаем номера кресел и если все в норме, 
             то разрешаем пользователю подтвердить заказ"""
             self.numb = cs.get_btn_numb()
