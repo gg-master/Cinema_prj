@@ -30,8 +30,10 @@ class AdminSignIn(MyQDialog):
     def __init__(self, parent, window_arr):
         super().__init__(parent, window_ar=window_arr)
         self.parent = parent
+
         window_arr.append(self)
         self.window_arr = window_arr
+
         uic.loadUi(path_for_gui + 'admin_sign_in.ui', self)
         # self.setStyleSheet(open("styles/admin_style.css", "r").read())
         self.pushButton.clicked.connect(self.accept_data)
@@ -43,6 +45,9 @@ class AdminSignIn(MyQDialog):
         if admin_login == self.lineEdit.text() and \
                 admin_pass == self.lineEdit_2.text():
             self.ex = MyWidget()
+            self.ex.setWindowFlag(Qt.WindowStaysOnTopHint)
+            self.ex.setWindowState(Qt.WindowActive)
+            self.ex.activateWindow()
             self.ex.show()
         else:
             self.statusBar.setText('Неправильно введен пароль или логин')
