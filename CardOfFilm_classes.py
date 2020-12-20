@@ -1,4 +1,5 @@
 from project_film.main import MyQWidget, MyQDialog, DataBase
+from project_film import QRcode
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5 import uic
 from PyQt5.Qt import *
@@ -34,9 +35,9 @@ class CardOfFilm(MyQWidget):
     def __init__(self, parent, id_film, window_arr):
         self.id = id_film
         super().__init__(window_ar=window_arr)
+        self.parent = parent
         window_arr.append(self)
         self.window_arr = window_arr
-        self.parent = parent
         self.setStyleSheet(open("styles/film_card.css", "r").read())
         uic.loadUi(path_for_gui + 'card_of_film.ui', self)
 
@@ -108,6 +109,7 @@ class CardOfFilm(MyQWidget):
         """Функция, которая открывает окно для покупки билетов"""
         bt = BuyTct(self, self.id, self.Filmcl.title)
         bt.show()
+        bt.exec_()
 
     def load_info(self):
         """Загрузка основной информации в оставшиеся label в gui"""
@@ -257,10 +259,10 @@ class MyPopup(QWidget):
 class BuyTct(MyQDialog):
     """Форма покупки билетов"""
     def __init__(self, parent, id, title):
-        super().__init__(parent, window_ar=parent.window_arr)
+        super().__init__(parent, window_ar=parent.window_arr, modal=False)
         self.parent = parent
         parent.window_arr.append(self)
-        # self.window_arr = window_arr
+        # self.window_arr = parent.window_arr
 
         self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
         uic.loadUi(path_for_gui + 'buy_tck.ui', self)
@@ -309,6 +311,7 @@ class BuyTct(MyQDialog):
             if self.accept.isEnabled() and self.numb is not None:
                 cs.set_selected_btn(self.numb, isSelected=True)
             cs.show()
+            cs.exec_()
             """Получаем номера кресел и если все в норме, 
             то разрешаем пользователю подтвердить заказ"""
             self.numb = cs.get_btn_numb()

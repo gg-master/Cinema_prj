@@ -365,7 +365,7 @@ class MyWidget(QMainWindow):
         cur = self.con.cursor()
         mdf = AddFilmDialog(self, [], False)
         mdf.show()
-        # mdf.exec_()
+        mdf.exec_()
         data = mdf.get_items()
         if data:
             cur.execute("""INSERT INTO films(id, title, rating, genre, actors, producer, year,
@@ -391,7 +391,7 @@ class MyWidget(QMainWindow):
                 '?' * len(ids)) + ")", ids).fetchone()
         mdf = AddFilmDialog(self, item_inf, True)
         mdf.show()
-        # mdf.exec_()
+        mdf.exec_()
         data = mdf.get_items()
         if data:
             cur.execute("""UPDATE films 
@@ -461,7 +461,7 @@ class MyWidget(QMainWindow):
         self.statusBar().showMessage('')
         mdf = AddSessionDialog(self, [], False)
         mdf.show()
-        # mdf.exec_()
+        mdf.exec_()
         data = mdf.get_items()
         if data:
             cur = self.con.cursor()
@@ -487,7 +487,7 @@ class MyWidget(QMainWindow):
                 '?' * len(ids)) + ")", ids).fetchone()
         mdf = AddSessionDialog(self, item_inf, True)
         mdf.show()
-        # mdf.exec_()
+        mdf.exec_()
         data = mdf.get_items()
         if data:
             cur.execute("""UPDATE timetable SET  cinema_id = ?, cinema_hall_id = ?, id_film = ?,
@@ -546,7 +546,7 @@ class MyWidget(QMainWindow):
         self.statusBar().showMessage('')
         mdf = AddCinemaDialog(self, [], False)
         mdf.show()
-        # mdf.exec_()
+        mdf.exec_()
         data = mdf.get_items()
         if data:
             cur = self.con.cursor()
@@ -571,7 +571,7 @@ class MyWidget(QMainWindow):
                 '?' * len(ids)) + ")", ids).fetchone()
         mdf = AddCinemaDialog(self, item_inf, True)
         mdf.show()
-        # mdf.exec_()
+        mdf.exec_()
         data = mdf.get_items()
         if data:
             cur.execute("""UPDATE cinemas SET  name_cinema = ?, address = ?, telephone = ? where id LIKE ?""",
@@ -627,7 +627,7 @@ class MyWidget(QMainWindow):
         self.statusBar().showMessage('')
         mdf = AddCinemaHallDialog(self, [], False)
         mdf.show()
-        # mdf.exec_()
+        mdf.exec_()
         data = mdf.get_items()
         if data:
             cur = self.con.cursor()
@@ -654,7 +654,7 @@ class MyWidget(QMainWindow):
                 '?' * len(ids)) + ")", ids).fetchone()
         mdf = AddCinemaHallDialog(self, item_inf, True)
         mdf.show()
-        # mdf.exec_()
+        mdf.exec_()
         data = mdf.get_items()
         if data:
             cur.execute("""UPDATE cinema_hall SET cinema_id = ?, cinema_hall_id = ?, number_of_sits = ?
