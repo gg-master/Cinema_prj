@@ -48,7 +48,8 @@ QComboBox{
 }
 QMessageBox::QPushButton{
 		background: green;
-}</string>
+}
+</string>
   </property>
   <widget class="QTabWidget" name="tabWidget">
    <property name="geometry">

@@ -345,8 +345,8 @@ class MovieSplashScreen(QSplashScreen):
 
 
 if __name__ == "__main__":
-    import time
-    time.sleep(3)
+    # import time
+    # time.sleep(3)
     window_arr = WindowArr()
     db = DataBase('mydatabase.db')
     if not with_wind_load:
