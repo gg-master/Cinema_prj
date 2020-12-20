@@ -1,4 +1,5 @@
 from project_film.main import MyQWidget, MyQDialog, DataBase
+from project_film import QRcode
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5 import uic
 from PyQt5.Qt import *
@@ -258,7 +259,7 @@ class MyPopup(QWidget):
 class BuyTct(MyQDialog):
     """Форма покупки билетов"""
     def __init__(self, parent, id, title):
-        super().__init__(parent, window_ar=parent.window_arr)
+        super().__init__(parent, window_ar=parent.window_arr, modal=False)
         self.parent = parent
         parent.window_arr.append(self)
         # self.window_arr = parent.window_arr

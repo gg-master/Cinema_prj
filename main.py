@@ -9,7 +9,7 @@ from project_film.WindowArr_class import WindowArr
 
 
 # Settings
-with_wind_load = False
+with_wind_load = True
 base_path_for_none_img = r'system_image\none_img.jpg'
 path_for_system_img = 'system_image\\'
 relative_path_for_media = 'films_image\\'
@@ -76,30 +76,33 @@ class MyQWidget(QWidget):
 
 
 class MyQDialog(QDialog):
-    def __init__(self, *args, window_ar):
+    def __init__(self, *args, window_ar, modal=True):
         super().__init__(*args)
         self.window_arr = window_ar
-        self.setModal(True)
+        if modal:
+            self.setModal(True)
+        else:
+            self.setModal(False)
 
     """Для виджета этот кусок кода вполне 
     удовлетворительно выполняет функция setModal в QDialog"""
-    # def closeEvent(self, a0: QCloseEvent):
-    #     if self.window_arr.check_window(self):
-    #         self.window_arr.setActive(self, False)
-    #         a0.ignore()
-    #     else:
-    #         self.window_arr.del_item(self)
-    #         super().closeEvent(a0)
-    #
-    # def show(self):
-    #     # Аналогично как в классе MyQWidget
-    #     if self.window_arr.check_wind_in_list(self):
-    #         super().close()
-    #     else:
-    #         super().show()
-    #
-    # def __hash__(self):
-    #     return hash(self.parent)
+    def closeEvent(self, a0: QCloseEvent):
+        if self.window_arr.check_window(self):
+            self.window_arr.setActive(self, False)
+            a0.ignore()
+        else:
+            self.window_arr.del_item(self)
+            super().closeEvent(a0)
+
+    def show(self):
+        # Аналогично как в классе MyQWidget
+        if self.window_arr.check_wind_in_list(self):
+            super().close()
+        else:
+            super().show()
+
+    def __hash__(self):
+        return hash(self.parent)
 
 
 class MainWindow(QMainWindow, card_widget.Ui_Form):
@@ -342,6 +345,8 @@ class MovieSplashScreen(QSplashScreen):
 
 
 if __name__ == "__main__":
+    import time
+    time.sleep(3)
     window_arr = WindowArr()
     db = DataBase('mydatabase.db')
     if not with_wind_load:
