@@ -28,7 +28,7 @@ sys.excepthook = my_exception_hook
 
 class AdminSignIn(MyQDialog):
     def __init__(self, parent, window_arr):
-        super().__init__(parent, window_ar=window_arr)
+        super().__init__(parent, window_ar=window_arr, modal=True)
         self.parent = parent
 
         window_arr.append(self)
@@ -93,10 +93,10 @@ class AddFilmDialog(MyQDialog):
         producer = self.lineEdit_5.text()
         year = self.lineEdit_6.text()
         duration = self.lineEdit_7.text()
-        description = self.lineEdit_8.text()
-        poster = self.lineEdit_9.text()
-        images = self.lineEdit_10.text()
-        trailer = self.lineEdit_11.text()
+        description = self.lineEdit_8.toPlainText()
+        poster = self.lineEdit_9.text() if self.lineEdit_9.text() else None
+        images = self.lineEdit_10.text() if self.lineEdit_10.text() else None
+        trailer = self.lineEdit_11.text() if self.lineEdit_11.text() else None
         # Проверка данных на корректность
         try:
             if title and int(year) <= dt.datetime.now().year and int(duration) > 0:
@@ -152,16 +152,16 @@ class AddSessionDialog(MyQDialog):
         price = self.lineEdit_4.text()
         # Проверка данных на корректность
         if not (cinema_id.isnumeric() and int(cinema_id) > 0 and
-                (int(cinema_id), ) in self.con.execute("""SELECT cinema_id from timetable""").fetchall()):
-            self.label_7.setText('Неправильный формат ввода')
+                (int(cinema_id), ) in self.con.execute("""SELECT id from cinemas""").fetchall()):
+            self.label_7.setText('Неправильный формат ввода id кинотеатра')
             return
         if not (hall_id.isnumeric() and int(hall_id) > 0 and
-                (int(hall_id), ) in self.con.execute("""SELECT cinema_hall_id from timetable""").fetchall()):
-            self.label_7.setText('Неправильный формат ввода')
+                (int(hall_id), ) in self.con.execute("""SELECT cinema_hall_id from cinema_hall""").fetchall()):
+            self.label_7.setText('Неправильный формат ввода id зала')
             return
         if not (film_id.isnumeric() and int(film_id) > 0 and
                 (int(film_id), ) in self.con.execute("""SELECT id from films""").fetchall()):
-            self.label_7.setText('Неправильный формат ввода')
+            self.label_7.setText('Неправильный формат ввода id фильма')
             return
         try:
             start_time = list(map(int, [self.lineEdit_year_start.text(),
@@ -175,12 +175,12 @@ class AddSessionDialog(MyQDialog):
             time_s = dt.datetime(*start_time, minute=0, second=0)
             time_e = dt.datetime(*end_time, minute=0, second=0)
         except (ValueError, TypeError):
-            self.label_7.setText('Неправильный формат ввода')
+            self.label_7.setText('Неправильный формат ввода времени')
             return
         duration = dt.timedelta(minutes=self.con.execute(f"""SELECT duration from
                                                              films where id = {film_id}""").fetchone()[0])
         if duration > time_e - time_s:
-            self.label_7.setText('Неправильный формат ввода')
+            self.label_7.setText('Неправильный формат ввода времени')
             return
         timetable = list(map(lambda x: (dt.datetime.strptime(x[0], '%Y-%m-%d %H:%M:%S'),
                                         dt.datetime.strptime(x[1], '%Y-%m-%d %H:%M:%S')),
@@ -190,13 +190,14 @@ class AddSessionDialog(MyQDialog):
         i = 0
         while i < len(timetable) and time_s > timetable[i][0]:
             i += 1
+        print(timetable)
         if self.pushButton.text() == 'Добавить' and not(timetable[i - 1][1] < time_s and (i < len(timetable)
                                                                                           and time_e < timetable[i][0])
                                                         or (i >= len(timetable))):
             self.label_7.setText('Неправильный формат ввода')
             return
         if not (price.isnumeric() and int(price) > 0):
-            self.label_7.setText('Неправильный формат ввода')
+            self.label_7.setText('Неправильный формат ввода цены')
             return
         places = ', '.join(['0'] * self.con.execute(f"""SELECT number_of_sits
                                                         from cinema_hall where (cinema_id = {cinema_id}
@@ -368,14 +369,16 @@ class MyWidget(QMainWindow):
     def add_film(self):
         self.statusBar().showMessage('')
         cur = self.con.cursor()
+        max_id = max(list(map(lambda x: int(x[0]),
+                              cur.execute('Select id from films').fetchall())))
         mdf = AddFilmDialog(self, [], False)
         mdf.show()
         mdf.exec_()
-        data = mdf.get_items()
+        data = [max_id + 1] + mdf.get_items()
         if data:
             cur.execute("""INSERT INTO films(id, title, rating, genre, actors, producer, year,
-                           duration, description, poster, images, trailer, cinema_id) VALUES(
-                           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", [i for i in data])
+                           duration, description, poster, images, trailer) VALUES(
+                           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", [i for i in data])
             self.con.commit()
             self.update_films()
 

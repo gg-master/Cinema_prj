@@ -565,7 +565,7 @@ class MyPushButton(QPushButton):
 class ChooseSeat(MyQDialog):
     """Диалог который предлагает пользователю выбрать места"""
     def __init__(self, parent, places):
-        super().__init__(parent, window_ar=parent.window_arr)
+        super().__init__(parent, window_ar=parent.window_arr, modal=True)
         self.parent = parent
         parent.window_arr.append(self)
         self.places = places

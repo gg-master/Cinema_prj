@@ -76,7 +76,7 @@ class MyQWidget(QWidget):
 
 
 class MyQDialog(QDialog):
-    def __init__(self, *args, window_ar, modal=True):
+    def __init__(self, *args, window_ar, modal=False):
         super().__init__(*args)
         self.window_arr = window_ar
         if modal:
@@ -273,7 +273,7 @@ class FilterDialog(MyQDialog):
     """Окно, которое отвечает за работу фильтра"""
     def __init__(self, parent):
         self.parent = parent
-        super().__init__(parent, window_ar=window_arr)
+        super().__init__(parent, window_ar=window_arr, modal=True)
         uic.loadUi(path_for_gui + 'filter.ui', self)
         self.setStyleSheet(open("styles/filter_style.css", "r").read())
         self.setWindowTitle('Настройки сортировки')
@@ -306,7 +306,6 @@ class FilterDialog(MyQDialog):
             self.a['rating'] = [True, self.comboBox_3.currentText()]
         else:
             self.a['rating'] = [False, '']
-
         if self.checkBox_4.isChecked():
             self.a['producer'] = [True, self.comboBox_4.currentText()]
         else:

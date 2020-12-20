@@ -299,12 +299,21 @@ QPushButton:hover:!pressed{
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="lineEdit_8">
+       <widget class="QPlainTextEdit" name="lineEdit_8">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="minimumSize">
          <size>
           <width>0</width>
           <height>200</height>
          </size>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: none;</string>
         </property>
        </widget>
       </item>
