@@ -31,6 +31,12 @@ QPushButton{
 	background-color: hsl(201, 32%, 44%);
     border-radius: 4px;
     color: white;
+}
+QPushButton:pressed{
+	background-color: hsl(200, 27%, 40%);
+}
+QPushButton:hover:!pressed{
+	background-color: hsl(200, 46%, 63);
 }</string>
   </property>
   <widget class="QWidget" name="layoutWidget">
