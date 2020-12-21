@@ -1,13 +1,13 @@
 from PyQt5 import uic
 from PyQt5.Qt import *
-from project_film.main import MyQDialog, MyQWidget
+from project_film.main import MyQDialog, DataBase
 from project_film.WindowArr_class import WindowArr
-import sqlite3
 import sys
-from PyQt5.QtWidgets import QApplication, QMessageBox, QDialog
+from PyQt5.QtWidgets import QApplication, QMessageBox
 from PyQt5.QtWidgets import QMainWindow, QTableWidgetItem
 import datetime as dt
 
+db = DataBase('mydatabase.db')
 admin_login = 'admin'
 admin_pass = 'admin'
 path_for_gui = 'ui_files\\'
@@ -30,20 +30,17 @@ class AdminSignIn(MyQDialog):
     def __init__(self, parent, window_arr):
         super().__init__(parent, window_ar=window_arr, modal=True)
         self.parent = parent
-
         window_arr.append(self)
         self.window_arr = window_arr
-
         uic.loadUi(path_for_gui + 'admin_sign_in.ui', self)
         # self.setStyleSheet(open("styles/admin_style.css", "r").read())
-        self.pushButton.clicked.connect(self.accept_data)
+        self.pushButton.clicked.connect(self.check_data)
         self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
         self.Form = parent
 
-    def accept_data(self):
+    def check_data(self):
         # Открываем Интрефейс для админа
-        if admin_login == self.lineEdit.text() and \
-                admin_pass == self.lineEdit_2.text():
+        if admin_login == self.lineEdit.text() and admin_pass == self.lineEdit_2.text():
             self.ex = MyWidget()
             self.ex.setWindowFlag(Qt.WindowStaysOnTopHint)
             self.ex.setWindowState(Qt.WindowActive)
@@ -65,7 +62,7 @@ class AddFilmDialog(MyQDialog):
         self.parent = parent
         parent.window_arr.append(self)
         uic.loadUi(path_for_gui + 'add_film_table.ui', self)
-        self.pushButton.clicked.connect(self.accept_data)
+        self.pushButton.clicked.connect(self.check_data)
         if changed:
             self.setWindowTitle('Редактирование записи')
             self.pushButton.setText('Сохранить')
@@ -85,7 +82,7 @@ class AddFilmDialog(MyQDialog):
             self.pushButton.setText('Добавить')
         self.arr = []
 
-    def accept_data(self):
+    def check_data(self):
         title = self.lineEdit.text()
         rating = self.lineEdit_2.text()
         genre = self.lineEdit_3.text()
@@ -93,10 +90,10 @@ class AddFilmDialog(MyQDialog):
         producer = self.lineEdit_5.text()
         year = self.lineEdit_6.text()
         duration = self.lineEdit_7.text()
-        description = self.lineEdit_8.toPlainText()
-        poster = self.lineEdit_9.text() if self.lineEdit_9.text() else None
-        images = self.lineEdit_10.text() if self.lineEdit_10.text() else None
-        trailer = self.lineEdit_11.text() if self.lineEdit_11.text() else None
+        description = self.lineEdit_8.text()
+        poster = self.lineEdit_9.text()
+        images = self.lineEdit_10.text()
+        trailer = self.lineEdit_11.text()
         # Проверка данных на корректность
         try:
             if title and int(year) <= dt.datetime.now().year and int(duration) > 0:
@@ -123,7 +120,6 @@ class AddSessionDialog(MyQDialog):
         self.parent = parent
         parent.window_arr.append(self)
         uic.loadUi(path_for_gui + 'add_session_table.ui', self)
-        self.con = sqlite3.connect(path_for_db + "mydatabase.db")
         self.pushButton.clicked.connect(self.check_data)
         self.arr = []
         if changed:
@@ -152,15 +148,15 @@ class AddSessionDialog(MyQDialog):
         price = self.lineEdit_4.text()
         # Проверка данных на корректность
         if not (cinema_id.isnumeric() and int(cinema_id) > 0 and
-                (int(cinema_id), ) in self.con.execute("""SELECT id from cinemas""").fetchall()):
+                (int(cinema_id), ) in db.request("""SELECT id from cinemas""").fetchall()):
             self.label_7.setText('Неправильный формат ввода id кинотеатра')
             return
         if not (hall_id.isnumeric() and int(hall_id) > 0 and
-                (int(hall_id), ) in self.con.execute("""SELECT cinema_hall_id from cinema_hall""").fetchall()):
+                (int(hall_id), ) in db.request("""SELECT cinema_hall_id from cinema_hall""").fetchall()):
             self.label_7.setText('Неправильный формат ввода id зала')
             return
         if not (film_id.isnumeric() and int(film_id) > 0 and
-                (int(film_id), ) in self.con.execute("""SELECT id from films""").fetchall()):
+                (int(film_id), ) in db.request("""SELECT id from films""").fetchall()):
             self.label_7.setText('Неправильный формат ввода id фильма')
             return
         try:
@@ -177,31 +173,37 @@ class AddSessionDialog(MyQDialog):
         except (ValueError, TypeError):
             self.label_7.setText('Неправильный формат ввода времени')
             return
-        duration = dt.timedelta(minutes=self.con.execute(f"""SELECT duration from
-                                                             films where id = {film_id}""").fetchone()[0])
+        duration = dt.timedelta(minutes=db.request(f"""SELECT duration from
+                                                       films where id = {film_id}""").fetchone()[0])
         if duration > time_e - time_s:
             self.label_7.setText('Неправильный формат ввода времени')
             return
         timetable = list(map(lambda x: (dt.datetime.strptime(x[0], '%Y-%m-%d %H:%M:%S'),
                                         dt.datetime.strptime(x[1], '%Y-%m-%d %H:%M:%S')),
-                             self.con.execute(f"""SELECT time_start, time_end from timetable
-                                                  where (cinema_id = {cinema_id}
-                                                  and cinema_hall_id = {hall_id})""").fetchall()))
+                             db.request(f"""SELECT time_start, time_end from timetable
+                                            where (cinema_id = {cinema_id}
+                                            and cinema_hall_id = {hall_id})""").fetchall()))
         i = 0
+        timetable.sort(key=lambda x: x[0])
         while i < len(timetable) and time_s > timetable[i][0]:
             i += 1
-        print(timetable)
-        if self.pushButton.text() == 'Добавить' and not(timetable[i - 1][1] < time_s and (i < len(timetable)
-                                                                                          and time_e < timetable[i][0])
-                                                        or (i >= len(timetable))):
-            self.label_7.setText('Неправильный формат ввода')
+        a = ''
+        if timetable[i - 1][1] <= time_s:
+            a = '1'
+        if i < len(timetable):
+            a += '2'
+        if time_e <= timetable[i][0]:
+            a += '3'
+        if not(timetable[i - 1][1] <= time_s and i < len(timetable) and time_e <= timetable[i][0] or i >= len(timetable)
+               or not i):
+            self.label_7.setText('Данное время уже занято')
             return
         if not (price.isnumeric() and int(price) > 0):
             self.label_7.setText('Неправильный формат ввода цены')
             return
-        places = ', '.join(['0'] * self.con.execute(f"""SELECT number_of_sits
-                                                        from cinema_hall where (cinema_id = {cinema_id}
-                                                        and cinema_hall_id = {hall_id})""").fetchone()[0])
+        places = ', '.join(['0'] * db.request(f"""SELECT number_of_sits
+                                                  from cinema_hall where (cinema_id = {cinema_id}
+                                                  and cinema_hall_id = {hall_id})""").fetchone()[0])
         self.arr = [cinema_id, hall_id, film_id, time_s, time_e, places, price]
         self.close()
 
@@ -217,7 +219,6 @@ class AddCinemaDialog(MyQDialog):
         self.parent = parent
         parent.window_arr.append(self)
         uic.loadUi(path_for_gui + 'add_cinema_table.ui', self)
-        self.con = sqlite3.connect(path_for_db + "mydatabase.db")
         self.pushButton.clicked.connect(self.check_data)
         self.arr = []
         if changed:
@@ -253,7 +254,6 @@ class AddCinemaHallDialog(MyQDialog):
         self.parent = parent
         parent.window_arr.append(self)
         uic.loadUi(path_for_gui + 'add_cinema_hall_table.ui', self)
-        self.con = sqlite3.connect(path_for_db + "mydatabase.db")
         self.pushButton.clicked.connect(self.check_data)
         self.arr = []
         if changed:
@@ -290,7 +290,6 @@ class MyWidget(QMainWindow):
         super().__init__()
         self.window_arr.append(self)
         uic.loadUi(path_for_gui + "admin_panel.ui", self)
-        self.con = sqlite3.connect(path_for_db + "mydatabase.db")
         self.setWindowTitle("Панель администратора")
         self.pushButton.clicked.connect(self.del_film)
         self.pushButton_2.clicked.connect(self.change_film)
@@ -340,13 +339,12 @@ class MyWidget(QMainWindow):
 
     def update_films(self):
         self.statusBar().showMessage('')
-        cur = self.con.cursor()
         search = self.lineEdit.text()
         s = self.dict_films[self.comboBox_2.currentText()]
         request = 'SELECT * FROM films'
         if s:
             request = f'SELECT * FROM films where {s} like "%{search}%"'
-        result = cur.execute(request).fetchall()
+        result = db.request(request).fetchall()
         s = self.dict_films[self.comboBox.currentText()]
         if s:
             result.sort(key=lambda x: x[['id', 'title', 'rating', 'genre', 'actors',
@@ -368,25 +366,22 @@ class MyWidget(QMainWindow):
 
     def add_film(self):
         self.statusBar().showMessage('')
-        cur = self.con.cursor()
-        max_id = max(list(map(lambda x: int(x[0]),
-                              cur.execute('Select id from films').fetchall())))
+        max_id = db.request("""SELECT MAX(id) from films""").fetchone()[0]
         mdf = AddFilmDialog(self, [], False)
         mdf.show()
         mdf.exec_()
         data = [max_id + 1] + mdf.get_items()
-        if data:
-            cur.execute("""INSERT INTO films(id, title, rating, genre, actors, producer, year,
-                           duration, description, poster, images, trailer) VALUES(
-                           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", [i for i in data])
-            self.con.commit()
+        if len(data) > 1:
+            db.request("""INSERT INTO films(id, title, rating, genre, actors, producer, year,
+                          duration, description, poster, images, trailer) VALUES(
+                          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                       *data)
+            db.commit()
             self.update_films()
 
     def change_film(self):
         self.statusBar().showMessage('')
-        cur = self.con.cursor()
-        rows = list(
-            set([i.row() for i in self.tableWidget.selectedItems()]))
+        rows = list(set([i.row() for i in self.tableWidget.selectedItems()]))
         ids = [self.tableWidget.item(i, 0).text() for i in rows]
         if not ids:
             self.statusBar().showMessage('Запись не выделена')
@@ -394,21 +389,19 @@ class MyWidget(QMainWindow):
         elif len(ids) > 1:
             self.statusBar().showMessage('Выбрано более 1 записи')
             return
-        item_inf = cur.execute(
-            "SELECT * FROM Films WHERE id IN (" + ", ".join(
-                '?' * len(ids)) + ")", ids).fetchone()
+        item_inf = db.request("SELECT * FROM Films WHERE id IN (" + ", ".join('?' * len(ids)) + ")", *ids).fetchone()
         mdf = AddFilmDialog(self, item_inf, True)
         mdf.show()
         mdf.exec_()
         data = mdf.get_items()
         if data:
-            cur.execute("""UPDATE films 
-            SET  title = ?, rating = ?, genre = ?, actors = ?, producer = ?,
-            year = ?, duration = ?, description = ?, poster = ?, images = ?, trailer = ?
-            where id LIKE ?""",
-                        (data[0], float(data[1]), data[2], data[3], data[4], int(data[5]),
-                         int(data[6]), data[7], data[8], data[9], data[10], item_inf[0]))
-            self.con.commit()
+            db.request("""UPDATE films 
+                          SET  title = ?, rating = ?, genre = ?, actors = ?, producer = ?,
+                          year = ?, duration = ?, description = ?, poster = ?, images = ?, trailer = ?
+                          where id LIKE ?""",
+                       data[0], float(data[1]), data[2], data[3], data[4], int(data[5]),
+                       int(data[6]), data[7], data[8], data[9], data[10], item_inf[0])
+            db.commit()
             self.update_films()
 
     def del_film(self):
@@ -421,19 +414,15 @@ class MyWidget(QMainWindow):
         elif len(ids) > 1:
             self.statusBar().showMessage('Выбрано более 1 записи')
             return
-        valid = QMessageBox.question(
-            self, '', "Действительно удалить элементы с id " + ",".join(ids),
-            QMessageBox.Yes, QMessageBox.No)
+        valid = QMessageBox.question(self, '', "Действительно удалить элементы с id " + ",".join(ids),
+                                     QMessageBox.Yes, QMessageBox.No)
         if valid == QMessageBox.Yes:
-            cur = self.con.cursor()
-            cur.execute("DELETE FROM films WHERE id IN (" + ", ".join(
-                '?' * len(ids)) + ")", ids)
-            self.con.commit()
-            self.update_sessions()
+            db.request("DELETE FROM films WHERE id IN (" + ", ".join('?' * len(ids)) + ")", *ids)
+            db.commit()
+            self.update_films()
 
     def update_sessions(self):
         self.statusBar().showMessage('')
-        cur = self.con.cursor()
         search = self.lineEdit_2.text()
         string = self.dict_sessions2[self.comboBox_4.currentText()]
         request = 'SELECT * FROM timetable'
@@ -442,7 +431,7 @@ class MyWidget(QMainWindow):
                 request = f'SELECT * FROM timetable where {string} like "%{search}%"'
             else:
                 request = f'SELECT * FROM timetable where (time_end like "%{search}%" or time_start like "%{search}%")'
-        result = cur.execute(request).fetchall()
+        result = db.request(request).fetchall()
         s = self.dict_sessions1[self.comboBox_3.currentText()]
         if s:
             for i in range(len(result)):
@@ -468,21 +457,20 @@ class MyWidget(QMainWindow):
     def add_session(self):
         self.statusBar().showMessage('')
         mdf = AddSessionDialog(self, [], False)
+        max_id = db.request("""SELECT MAX(id) from timetable""").fetchone()[0]
         mdf.show()
         mdf.exec_()
-        data = mdf.get_items()
-        if data:
-            cur = self.con.cursor()
-            cur.execute("""INSERT INTO timetable (cinema_id, cinema_hall_id, id_film, time_start, time_end,
-                           places, price) VALUES(?, ?, ?, ?, ?, ?, ?)""", tuple(data))
-            self.con.commit()
+        data = [max_id + 1] + mdf.get_items()
+        if len(data) > 1:
+            db.request("""INSERT INTO timetable (id, cinema_id, cinema_hall_id, id_film, time_start,
+                          time_end, places, price) VALUES(?, ?, ?, ?, ?, ?, ?, ?)""",
+                       *data)
+            db.commit()
             self.update_sessions()
 
     def change_session(self):
         self.statusBar().showMessage('')
-        cur = self.con.cursor()
-        rows = list(
-            set([i.row() for i in self.tableWidget_2.selectedItems()]))
+        rows = list(set([i.row() for i in self.tableWidget_2.selectedItems()]))
         ids = [self.tableWidget_2.item(i, 0).text() for i in rows]
         if not ids:
             self.statusBar().showMessage('Запись не выделена')
@@ -490,20 +478,19 @@ class MyWidget(QMainWindow):
         elif len(ids) > 1:
             self.statusBar().showMessage('Выбрано более 1 записи')
             return
-        item_inf = cur.execute(
-            "SELECT * FROM timetable WHERE id = (" + ", ".join(
-                '?' * len(ids)) + ")", ids).fetchone()
+        item_inf = db.request("SELECT * FROM timetable WHERE id = (" + ", ".join('?' * len(ids)) + ")",
+                              *ids).fetchone()
         mdf = AddSessionDialog(self, item_inf, True)
         mdf.show()
         mdf.exec_()
         data = mdf.get_items()
         if data:
-            cur.execute("""UPDATE timetable SET  cinema_id = ?, cinema_hall_id = ?, id_film = ?,
-                           time_start = ?, time_end = ?,
-                           places = ?, price = ? where id LIKE ?""",
-                        (int(data[0]), int(data[1]), int(data[2]), data[3], data[4], data[5],
-                         int(data[6]), item_inf[0]))
-            self.con.commit()
+            db.request("""UPDATE timetable SET  cinema_id = ?, cinema_hall_id = ?, id_film = ?,
+                          time_start = ?, time_end = ?,
+                          places = ?, price = ? where id LIKE ?""",
+                       int(data[0]), int(data[1]), int(data[2]), data[3], data[4], data[5],
+                       int(data[6]), item_inf[0])
+            db.commit()
             self.update_sessions()
 
     def del_session(self):
@@ -516,25 +503,21 @@ class MyWidget(QMainWindow):
         elif len(ids) > 1:
             self.statusBar().showMessage('Выбрано более 1 записи')
             return
-        valid = QMessageBox.question(
-            self, '', "Действительно удалить элементы с id " + ",".join(ids),
-            QMessageBox.Yes, QMessageBox.No)
+        valid = QMessageBox.question(self, '', "Действительно удалить элементы с id " + ",".join(ids),
+                                     QMessageBox.Yes, QMessageBox.No)
         if valid == QMessageBox.Yes:
-            cur = self.con.cursor()
-            cur.execute("DELETE FROM timetable WHERE id IN (" + ", ".join(
-                '?' * len(ids)) + ")", ids)
-            self.con.commit()
+            db.request("DELETE FROM timetable WHERE id IN (" + ", ".join('?' * len(ids)) + ")", *ids)
+            db.commit()
             self.update_sessions()
 
     def update_cinemas(self):
         self.statusBar().showMessage('')
-        cur = self.con.cursor()
         search = self.lineEdit_3.text()
         s = self.dict_cinemas[self.comboBox_6.currentText()]
         request = 'SELECT * FROM cinemas'
         if s:
             request = f'SELECT * FROM cinemas where {s} like "%{search}%"'
-        result = cur.execute(request).fetchall()
+        result = db.request(request).fetchall()
         s = self.dict_cinemas[self.comboBox_5.currentText()]
         if s:
             result.sort(key=lambda x: x[['id', 'name_cinema', 'address', 'telephone'].index(s)])
@@ -553,20 +536,20 @@ class MyWidget(QMainWindow):
     def add_cinema(self):
         self.statusBar().showMessage('')
         mdf = AddCinemaDialog(self, [], False)
+        max_id = db.request("""SELECT MAX(id) from cinemas""").fetchone()[0]
         mdf.show()
         mdf.exec_()
-        data = mdf.get_items()
-        if data:
-            cur = self.con.cursor()
-            cur.execute("""INSERT INTO cinemas (name_cinema, address, telephone) VALUES(?, ?, ?)""", tuple(data))
-            self.con.commit()
+        data = [max_id + 1] + mdf.get_items()
+        if len(data) > 1:
+            db.request("""INSERT INTO cinemas (id, name_cinema, address, telephone)
+                          VALUES(?, ?, ?, ?)""",
+                       *data)
+            db.commit()
             self.update_cinemas()
 
     def change_cinema(self):
         self.statusBar().showMessage('')
-        cur = self.con.cursor()
-        rows = list(
-            set([i.row() for i in self.tableWidget_3.selectedItems()]))
+        rows = list(set([i.row() for i in self.tableWidget_3.selectedItems()]))
         ids = [self.tableWidget_3.item(i, 0).text() for i in rows]
         if not ids:
             self.statusBar().showMessage('Запись не выделена')
@@ -574,17 +557,16 @@ class MyWidget(QMainWindow):
         elif len(ids) > 1:
             self.statusBar().showMessage('Выбрано более 1 записи')
             return
-        item_inf = cur.execute(
-            "SELECT * FROM cinemas WHERE id = (" + ", ".join(
-                '?' * len(ids)) + ")", ids).fetchone()
+        item_inf = db.request("SELECT * FROM cinemas WHERE id = (" + ", ".join('?' * len(ids)) + ")",
+                              *ids).fetchone()
         mdf = AddCinemaDialog(self, item_inf, True)
         mdf.show()
         mdf.exec_()
         data = mdf.get_items()
         if data:
-            cur.execute("""UPDATE cinemas SET  name_cinema = ?, address = ?, telephone = ? where id LIKE ?""",
-                        (*data, item_inf[0]))
-            self.con.commit()
+            db.request("""UPDATE cinemas SET  name_cinema = ?, address = ?, telephone = ? where id LIKE ?""",
+                       (*data, item_inf[0]))
+            db.commit()
             self.update_cinemas()
 
     def del_cinema(self):
@@ -597,25 +579,21 @@ class MyWidget(QMainWindow):
         elif len(ids) > 1:
             self.statusBar().showMessage('Выбрано более 1 записи')
             return
-        valid = QMessageBox.question(
-            self, '', "Действительно удалить элементы с id " + ",".join(ids),
-            QMessageBox.Yes, QMessageBox.No)
+        valid = QMessageBox.question(self, '', "Действительно удалить элементы с id " + ",".join(ids),
+                                     QMessageBox.Yes, QMessageBox.No)
         if valid == QMessageBox.Yes:
-            cur = self.con.cursor()
-            cur.execute("DELETE FROM cinemas WHERE id IN (" + ", ".join(
-                '?' * len(ids)) + ")", ids)
-            self.con.commit()
+            db.request("DELETE FROM cinemas WHERE id IN (" + ", ".join('?' * len(ids)) + ")", *ids)
+            db.commit()
             self.update_cinemas()
 
     def update_cinema_halls(self):
         self.statusBar().showMessage('')
-        cur = self.con.cursor()
         search = self.lineEdit_4.text()
         s = self.dict_cinema_halls[self.comboBox_8.currentText()]
         request = 'SELECT * FROM cinema_hall'
         if s:
             request = f'SELECT * FROM cinema_hall where {s} like "%{search}%"'
-        result = cur.execute(request).fetchall()
+        result = db.request(request).fetchall()
         s = self.dict_cinema_halls[self.comboBox_7.currentText()]
         if s:
             result.sort(key=lambda x: x[['id', 'cinema_id', 'cinema_hall_id', 'number_of_sits'].index(s)])
@@ -634,22 +612,20 @@ class MyWidget(QMainWindow):
     def add_cinema_hall(self):
         self.statusBar().showMessage('')
         mdf = AddCinemaHallDialog(self, [], False)
+        max_id = db.request("""SELECT MAX(id) from cinema_hall""").fetchone()[0]
         mdf.show()
         mdf.exec_()
-        data = mdf.get_items()
-        if data:
-            cur = self.con.cursor()
-            cur.execute("""INSERT INTO cinema_hall (cinema_id, cinema_hall_id, number_of_sits)
-                           VALUES(?, ?, ?)""",
-                        tuple(data))
-            self.con.commit()
+        data = [max_id + 1] + mdf.get_items()
+        if len(data) > 1:
+            db.request("""INSERT INTO cinema_hall (id, cinema_id, cinema_hall_id, number_of_sits)
+                          VALUES(?, ?, ?, ?)""",
+                       *data)
+            db.commit()
             self.update_cinema_halls()
 
     def change_cinema_hall(self):
         self.statusBar().showMessage('')
-        cur = self.con.cursor()
-        rows = list(
-            set([i.row() for i in self.tableWidget_4.selectedItems()]))
+        rows = list(set([i.row() for i in self.tableWidget_4.selectedItems()]))
         ids = [self.tableWidget_4.item(i, 0).text() for i in rows]
         if not ids:
             self.statusBar().showMessage('Запись не выделена')
@@ -657,18 +633,17 @@ class MyWidget(QMainWindow):
         elif len(ids) > 1:
             self.statusBar().showMessage('Выбрано более 1 записи')
             return
-        item_inf = cur.execute(
-            "SELECT * FROM cinema_hall WHERE id IN (" + ", ".join(
-                '?' * len(ids)) + ")", ids).fetchone()
+        item_inf = db.request("SELECT * FROM cinema_hall WHERE id IN (" + ", ".join('?' * len(ids)) + ")",
+                              *ids).fetchone()
         mdf = AddCinemaHallDialog(self, item_inf, True)
         mdf.show()
         mdf.exec_()
         data = mdf.get_items()
         if data:
-            cur.execute("""UPDATE cinema_hall SET cinema_id = ?, cinema_hall_id = ?, number_of_sits = ?
-                        where id LIKE ?""",
-                        (*data, item_inf[0]))
-            self.con.commit()
+            db.request("""UPDATE cinema_hall SET cinema_id = ?, cinema_hall_id = ?, number_of_sits = ?
+                          where id LIKE ?""",
+                       *data, item_inf[0])
+            db.commit()
             self.update_cinema_halls()
 
     def del_cinema_hall(self):
@@ -681,14 +656,11 @@ class MyWidget(QMainWindow):
         elif len(ids) > 1:
             self.statusBar().showMessage('Выбрано более 1 записи')
             return
-        valid = QMessageBox.question(
-            self, '', "Действительно удалить элементы с id " + ",".join(ids),
-            QMessageBox.Yes, QMessageBox.No)
+        valid = QMessageBox.question(self, '', "Действительно удалить элементы с id " + ",".join(ids),
+                                     QMessageBox.Yes, QMessageBox.No)
         if valid == QMessageBox.Yes:
-            cur = self.con.cursor()
-            cur.execute("DELETE FROM cinema_hall WHERE id IN (" + ", ".join(
-                '?' * len(ids)) + ")", ids)
-            self.con.commit()
+            db.request("DELETE FROM cinema_hall WHERE id IN (" + ", ".join('?' * len(ids)) + ")", *ids)
+            db.commit()
             self.update_cinema_halls()
 
     def __hash__(self):
