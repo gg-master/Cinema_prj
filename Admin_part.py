@@ -41,7 +41,8 @@ class AdminSignIn(MyQDialog):
     def check_data(self):
         """Проверка введенных данных"""
         # Открываем Интрефейс для админа
-        if admin_login == self.lineEdit.text() and admin_pass == self.lineEdit_2.text():
+        if admin_login == self.lineEdit.text() and\
+                admin_pass == self.lineEdit_2.text():
             self.ex = MyWidget()
             self.ex.setWindowFlag(Qt.WindowStaysOnTopHint)
             self.ex.setWindowState(Qt.WindowActive)
@@ -74,7 +75,7 @@ class AddFilmDialog(MyQDialog):
             self.lineEdit_5.setText(str(array[5]))
             self.lineEdit_6.setText(str(array[6]))
             self.lineEdit_7.setText(str(array[7]))
-            self.lineEdit_8.insertPlainText(str(array[8]))
+            self.lineEdit_8.setText(str(array[8]))
             self.lineEdit_9.setText(str(array[9]))
             self.lineEdit_10.setText(str(array[10]))
             self.lineEdit_11.setText(str(array[11]))
@@ -92,15 +93,16 @@ class AddFilmDialog(MyQDialog):
         producer = self.lineEdit_5.text()
         year = self.lineEdit_6.text()
         duration = self.lineEdit_7.text()
-        description = self.lineEdit_8.toPlainText()
+        description = self.lineEdit_8.text()
         poster = self.lineEdit_9.text()
         images = self.lineEdit_10.text()
         trailer = self.lineEdit_11.text()
         # Проверка данных на корректность
         try:
-            if title and int(year) <= dt.datetime.now().year and int(duration) > 0:
-                self.arr = [title, rating, genre, actors, producer, year, duration,
-                            description, poster, images, trailer]
+            if title and int(year) <= dt.datetime.now().year and\
+                    int(duration) > 0:
+                self.arr = [title, rating, genre, actors, producer, year,
+                            duration, description, poster, images, trailer]
                 self.close()
             else:
                 self.label_12.setText('Неверно заполнена форма')
@@ -152,17 +154,21 @@ class AddSessionDialog(MyQDialog):
         # Проверка данных на корректность
         # Проверка на существование кинотеатра
         if not (cinema_id.isnumeric() and int(cinema_id) > 0 and
-                (int(cinema_id), ) in db.request("""SELECT id from cinemas""").fetchall()):
+                (int(cinema_id), ) in
+                db.request("""SELECT id from cinemas""").fetchall()):
             self.label_7.setText('Неправильный формат ввода id кинотеатра')
             return
         # Проверка на существование кинозала
         if not (hall_id.isnumeric() and int(hall_id) > 0 and
-                (int(hall_id), ) in db.request("""SELECT cinema_hall_id from cinema_hall""").fetchall()):
+                (int(hall_id), ) in
+                db.request("""SELECT cinema_hall_id
+                              from cinema_hall""").fetchall()):
             self.label_7.setText('Неправильный формат ввода id зала')
             return
         # Проверка на существование фильма
         if not (film_id.isnumeric() and int(film_id) > 0 and
-                (int(film_id), ) in db.request("""SELECT id from films""").fetchall()):
+                (int(film_id), ) in
+                db.request("""SELECT id from films""").fetchall()):
             self.label_7.setText('Неправильный формат ввода id фильма')
             return
         # Проверка на правильность введенного времени
@@ -180,35 +186,41 @@ class AddSessionDialog(MyQDialog):
         except (ValueError, TypeError):
             self.label_7.setText('Неправильный формат ввода времени')
             return
-        duration = dt.timedelta(minutes=db.request(f"""SELECT duration from
-                                                       films where id = {film_id}""").fetchone()[0])
+        duration = dt.timedelta(
+            minutes=db.request(f"""SELECT duration from
+                                   films where id =
+                                   {film_id}""").fetchone()[0])
         # Проверка на то, что длина фильма меньше выделенного времени на сеанс
         if duration > time_e - time_s:
-            self.label_7.setText('Неправильный формат ввода времени')
+            self.label_7.setText('Длиельность времени больше длины сеанса')
             return
-        timetable = list(map(lambda x: (dt.datetime.strptime(x[0], '%Y-%m-%d %H:%M:%S'),
-                                        dt.datetime.strptime(x[1], '%Y-%m-%d %H:%M:%S')),
-                             db.request(f"""SELECT time_start, time_end from timetable
-                                            where (cinema_id = {cinema_id}
-                                            and cinema_hall_id = {hall_id})""").fetchall()))
+        timetable = list(map(lambda x: (dt.datetime.strptime
+                                        (x[0], '%Y-%m-%d %H:%M:%S'),
+                                        dt.datetime.strptime
+                                        (x[1], '%Y-%m-%d %H:%M:%S')),
+                             db.request(f"""SELECT time_start, time_end from
+                                            timetable where (cinema_id =
+                                            {cinema_id} and cinema_hall_id =
+                                            {hall_id})""").fetchall()))
         i = 0
-
         timetable.sort(key=lambda x: x[0])
         while i < len(timetable) and time_s > timetable[i][0]:
             i += 1
         # Проверка на то, нет ли сеанса в указанное время
-
-        if not(timetable and timetable[i - 1][1] <= time_s and i < len(timetable) and time_e <= timetable[i][0] or i >= len(timetable)
-               or not i):
+        if not(timetable and timetable[i - 1][1] <= time_s and
+               i < len(timetable) and time_e <= timetable[i][0] or
+               i >= len(timetable) or not i):
             self.label_7.setText('Данное время уже занято')
             return
         # Проверка на корректность ввода цены
         if not (price.isnumeric() and int(price) > 0):
             self.label_7.setText('Неправильный формат ввода цены')
             return
-        places = ', '.join(['0'] * db.request(f"""SELECT number_of_sits
-                                                  from cinema_hall where (cinema_id = {cinema_id}
-                                                  and cinema_hall_id = {hall_id})""").fetchone()[0])
+        places = ', '.join(['0'] * db.request(f"""SELECT number_of_sits from
+                                                  cinema_hall where (cinema_id
+                                                  = {cinema_id} and cinema_hall
+                                                  _id = {hall_id})"""
+                                              ).fetchone()[0])
         self.arr = [cinema_id, hall_id, film_id, time_s, time_e, places, price]
         self.close()
 
@@ -278,8 +290,9 @@ class AddCinemaHallDialog(MyQDialog):
         cinema_hall_id = self.lineEdit_2.text()
         number_of_sits = self.lineEdit_3.text()
         # Проверка данных на корректность
-        if not(cinema_id and cinema_hall_id and number_of_sits and type(cinema_id) == int,
-               type(cinema_hall_id) == int, type(number_of_sits) == int):
+        if not(cinema_id and cinema_hall_id and number_of_sits and
+               type(cinema_id) == int, type(cinema_hall_id) == int,
+               type(number_of_sits) == int):
             self.label_4.setText('Неправильный формат ввода')
             return
         self.arr = [int(cinema_id), int(cinema_hall_id), int(number_of_sits)]
@@ -314,23 +327,33 @@ class MyWidget(QMainWindow):
         self.pushButton_14.clicked.connect(self.change_cinema_hall)
         self.pushButton_15.clicked.connect(self.del_cinema_hall)
         self.pushButton_16.clicked.connect(self.update_cinema_halls)
-        self.dict_films = {'ID': 'id', 'Название (title)': 'title', 'Рейтинг (rating)': 'rating',
-                           'Жанр (genre)': 'genre', 'Актёры (actors)': 'actors', 'Продюссер (producer)': 'producer',
-                           'Год (year)': 'year', 'Продолжительность (duration)': 'duration',
-                           'Описание (description)': 'description', 'Постер (poster)': 'poster',
-                           'Картинки (images)': 'images', 'Трейлер (trailer)': 'trailer', '': ''}
-        self.dict_sessions1 = {'ID': 'id', 'id кинотеатра (cinema_id)': 'cinema_id',
-                               'id кинозала (cinema_hall_id)': 'cinema_hall_id', 'id фильма (id_film)': 'id_film',
-                               'Время начала (time_start)': 'time_start', 'Время конца (time_end)': 'time_end',
-                               'Цена (price)': 'price', '': ''}
-        self.dict_sessions2 = {'ID': 'id', 'id кинотеатра (cinema_id)': 'cinema_id',
-                               'id кинозала (cinema_hall_id)': 'cinema_hall_id', 'id фильма (id_film)': 'id_film',
-                               'Дата': 'date', 'Цена (price)': 'price', '': ''}
-        self.dict_cinemas = {'ID': 'id', 'Название кинотеатра (name_cinema)': 'name_cinema',
-                             'Адрес (address)': 'address', 'Телефон (telephone)': 'telephone', '': ''}
-        self.dict_cinema_halls = {'ID': 'id', 'id кинотеатра (cinema_id)': 'cinema_id',
-                                  'id кинозала (cinema_hall_id)': 'cinema_hall_id',
-                                  'Кол-во мест (number_of_sits)': 'number_of_sits', '': ''}
+        self.dict_films = {'ID': 'id', 'Название (title)': 'title',
+                           'Рейтинг (rating)': 'rating', 'Жанр (genre)':
+                           'genre', 'Актёры (actors)': 'actors',
+                           'Продюссер (producer)': 'producer', 'Год (year)':
+                           'year', 'Продолжительность (duration)': 'duration',
+                           'Описание (description)': 'description',
+                           'Постер (poster)': 'poster', 'Картинки (images)':
+                           'images', 'Трейлер (trailer)': 'trailer', '': ''}
+        self.dict_sessions1 = {'ID': 'id', 'id кинотеатра (cinema_id)':
+                               'cinema_id', 'id кинозала (cinema_hall_id)':
+                               'cinema_hall_id', 'id фильма (id_film)':
+                               'id_film', 'Время начала (time_start)':
+                               'time_start', 'Время конца (time_end)':
+                               'time_end', 'Цена (price)': 'price', '': ''}
+        self.dict_sessions2 = {'ID': 'id', 'id кинотеатра (cinema_id)':
+                               'cinema_id', 'id кинозала (cinema_hall_id)':
+                               'cinema_hall_id', 'id фильма (id_film)':
+                               'id_film', 'Дата': 'date', 'Цена (price)':
+                               'price', '': ''}
+        self.dict_cinemas = {'ID': 'id', 'Название кинотеатра (name_cinema)':
+                             'name_cinema', 'Адрес (address)': 'address',
+                             'Телефон (telephone)': 'telephone', '': ''}
+        self.dict_cinema_halls = {'ID': 'id', 'id кинотеатра (cinema_id)':
+                                  'cinema_id', 'id кинозала (cinema_hall_id)':
+                                  'cinema_hall_id', 'Кол-во мест'
+                                                    ' (number_of_sits)':
+                                  'number_of_sits', '': ''}
         self.comboBox.addItems([_ for _ in self.dict_films.keys()])
         self.comboBox_2.addItems([_ for _ in self.dict_films.keys()])
         self.comboBox_3.addItems([_ for _ in self.dict_sessions1.keys()])
@@ -357,15 +380,19 @@ class MyWidget(QMainWindow):
         # Сортировка таблицы
         s = self.dict_films[self.comboBox.currentText()]
         if s:
-            result.sort(key=lambda x: x[['id', 'title', 'rating', 'genre', 'actors',
-                                         'producer', 'year', 'duration', 'description',
-                                         'poster', 'images', 'trailer'].index(s)])
+            result.sort(key=lambda x: x[['id', 'title', 'rating', 'genre',
+                                         'actors', 'producer', 'year',
+                                         'duration', 'description', 'poster',
+                                         'images', 'trailer'].index(s)])
         # Заполнение таблицы
         self.tableWidget.setColumnCount(12)
         self.tableWidget.setRowCount(0)
-        self.tableWidget.setHorizontalHeaderLabels(['ID', 'Название', 'Рейтинг', 'Жанр', 'Актёры',
-                                                    'Режиссер', 'Год', 'Продолжительность', 'Описание',
-                                                    'Постер', 'Картинки', 'Трейлер'])
+        self.tableWidget.setHorizontalHeaderLabels(['ID', 'Название',
+                                                    'Рейтинг', 'Жанр',
+                                                    'Актёры', 'Режиссер',
+                                                    'Год', 'Продолжительность',
+                                                    'Описание', 'Постер',
+                                                    'Картинки', 'Трейлер'])
         self.tableWidget.horizontalHeader().setMinimumSectionSize(50)
         self.tableWidget.verticalHeader().setVisible(False)
         for i, row in enumerate(result):
@@ -384,9 +411,10 @@ class MyWidget(QMainWindow):
         mdf.exec_()
         data = [max_id + 1] + mdf.get_items()
         if len(data) > 1:
-            db.request("""INSERT INTO films(id, title, rating, genre, actors, producer, year,
-                          duration, description, poster, images, trailer) VALUES(
-                          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            db.request("""INSERT INTO films(id, title, rating, genre, actors,
+                          producer, year, duration, description, poster,
+                          images, trailer) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                           ?, ?)""",
                        *data)
             db.commit()
             self.update_films()
@@ -404,18 +432,21 @@ class MyWidget(QMainWindow):
             self.statusBar().showMessage('Выбрано более 1 записи')
             return
         # Обновление данных о фильме
-        item_inf = db.request("SELECT * FROM Films WHERE id IN (" + ", ".join('?' * len(ids)) + ")", *ids).fetchone()
+        item_inf = db.request("SELECT * FROM Films WHERE id IN (" +
+                              ", ".join('?' * len(ids)) + ")", *ids).fetchone()
         mdf = AddFilmDialog(self, item_inf, True)
         mdf.show()
         mdf.exec_()
         data = mdf.get_items()
         if data:
-            db.request("""UPDATE films 
-                          SET  title = ?, rating = ?, genre = ?, actors = ?, producer = ?,
-                          year = ?, duration = ?, description = ?, poster = ?, images = ?, trailer = ?
-                          where id LIKE ?""",
-                       data[0], float(data[1]), data[2], data[3], data[4], int(data[5]),
-                       int(data[6]), data[7], data[8], data[9], data[10], item_inf[0])
+            db.request("""UPDATE films
+                          SET  title = ?, rating = ?, genre = ?, actors = ?,
+                          producer = ?, year = ?, duration = ?, description =
+                          ?, poster = ?, images = ?, trailer = ? where id LIKE
+                          ?""",
+                       data[0], float(data[1]), data[2], data[3], data[4],
+                       int(data[5]), int(data[6]), data[7], data[8], data[9],
+                       data[10], item_inf[0])
             db.commit()
             self.update_films()
 
@@ -432,10 +463,13 @@ class MyWidget(QMainWindow):
             self.statusBar().showMessage('Выбрано более 1 записи')
             return
         # Запрос на удаление фильма
-        valid = QMessageBox.question(self, '', "Действительно удалить элементы с id " + ",".join(ids),
+        valid = QMessageBox.question(self, '', "Действительно удалить"
+                                               " элементы с id " +
+                                               ",".join(ids),
                                      QMessageBox.Yes, QMessageBox.No)
         if valid == QMessageBox.Yes:
-            db.request("DELETE FROM films WHERE id IN (" + ", ".join('?' * len(ids)) + ")", *ids)
+            db.request("DELETE FROM films WHERE id IN (" +
+                       ", ".join('?' * len(ids)) + ")", *ids)
             db.commit()
             self.update_films()
 
@@ -448,24 +482,32 @@ class MyWidget(QMainWindow):
         request = 'SELECT * FROM timetable'
         if string:
             if string != 'date':
-                request = f'SELECT * FROM timetable where {string} like "%{search}%"'
+                request = f'SELECT * FROM timetable where {string} like' \
+                          f' "%{search}%"'
             else:
-                request = f'SELECT * FROM timetable where (time_end like "%{search}%" or time_start like "%{search}%")'
+                request = f'SELECT * FROM timetable where (time_end like ' \
+                          f'"%{search}%" or time_start like "%{search}%")'
         result = db.request(request).fetchall()
         # Сортировка таблицы
         s = self.dict_sessions1[self.comboBox_3.currentText()]
         if s:
             for i in range(len(result)):
                 result[i] = list(result[i])
-                result[i][4] = dt.datetime.strptime(result[i][4], '%Y-%m-%d %H:%M:%S')
-                result[i][5] = dt.datetime.strptime(result[i][5], '%Y-%m-%d %H:%M:%S')
-            result.sort(key=lambda x: x[['id', 'cinema_id', 'cinema_hall_id', 'id_film', 'time_start', 'time_end',
+                result[i][4] = dt.datetime.strptime(result[i][4],
+                                                    '%Y-%m-%d %H:%M:%S')
+                result[i][5] = dt.datetime.strptime(result[i][5],
+                                                    '%Y-%m-%d %H:%M:%S')
+            result.sort(key=lambda x: x[['id', 'cinema_id', 'cinema_hall_id',
+                                         'id_film', 'time_start', 'time_end',
                                          'price'].index(s)])
         # Заполнение таблицы
         self.tableWidget_2.setColumnCount(8)
         self.tableWidget_2.setRowCount(0)
-        self.tableWidget_2.setHorizontalHeaderLabels(['ID', 'ID кинотеатра', 'ID кинозала', 'ID фильма',
-                                                      'Время начала', 'Время конца',
+        self.tableWidget_2.setHorizontalHeaderLabels(['ID', 'ID кинотеатра',
+                                                      'ID кинозала',
+                                                      'ID фильма',
+                                                      'Время начала',
+                                                      'Время конца',
                                                       'Места', 'Цена'])
         self.tableWidget_2.verticalHeader().setVisible(False)
         for i, row in enumerate(result):
@@ -485,8 +527,9 @@ class MyWidget(QMainWindow):
         mdf.exec_()
         data = [max_id + 1] + mdf.get_items()
         if len(data) > 1:
-            db.request("""INSERT INTO timetable (id, cinema_id, cinema_hall_id, id_film, time_start,
-                          time_end, places, price) VALUES(?, ?, ?, ?, ?, ?, ?, ?)""",
+            db.request("""INSERT INTO timetable (id, cinema_id, cinema_hall_id,
+                          id_film, time_start, time_end, places, price)
+                           VALUES(?, ?, ?, ?, ?, ?, ?, ?)""",
                        *data)
             db.commit()
             self.update_sessions()
@@ -504,17 +547,19 @@ class MyWidget(QMainWindow):
             self.statusBar().showMessage('Выбрано более 1 записи')
             return
         # Обновление данных о сеансе
-        item_inf = db.request("SELECT * FROM timetable WHERE id = (" + ", ".join('?' * len(ids)) + ")",
+        item_inf = db.request("SELECT * FROM timetable WHERE id = (" +
+                              ", ".join('?' * len(ids)) + ")",
                               *ids).fetchone()
         mdf = AddSessionDialog(self, item_inf, True)
         mdf.show()
         mdf.exec_()
         data = mdf.get_items()
         if data:
-            db.request("""UPDATE timetable SET  cinema_id = ?, cinema_hall_id = ?, id_film = ?,
-                          time_start = ?, time_end = ?,
+            db.request("""UPDATE timetable SET  cinema_id = ?, cinema_hall_id =
+                          ?, id_film = ?, time_start = ?, time_end = ?,
                           places = ?, price = ? where id LIKE ?""",
-                       int(data[0]), int(data[1]), int(data[2]), data[3], data[4], data[5],
+                       int(data[0]), int(data[1]), int(data[2]), data[3],
+                       data[4], data[5],
                        int(data[6]), item_inf[0])
             db.commit()
             self.update_sessions()
@@ -532,10 +577,12 @@ class MyWidget(QMainWindow):
             self.statusBar().showMessage('Выбрано более 1 записи')
             return
         # Запрос на удаление сеанса
-        valid = QMessageBox.question(self, '', "Действительно удалить элементы с id " + ",".join(ids),
+        valid = QMessageBox.question(self, '', "Действительно удалить элементы"
+                                               " с id " + ",".join(ids),
                                      QMessageBox.Yes, QMessageBox.No)
         if valid == QMessageBox.Yes:
-            db.request("DELETE FROM timetable WHERE id IN (" + ", ".join('?' * len(ids)) + ")", *ids)
+            db.request("DELETE FROM timetable WHERE id IN (" +
+                       ", ".join('?' * len(ids)) + ")", *ids)
             db.commit()
             self.update_sessions()
 
@@ -552,11 +599,14 @@ class MyWidget(QMainWindow):
         # Сортировка таблицы
         s = self.dict_cinemas[self.comboBox_5.currentText()]
         if s:
-            result.sort(key=lambda x: x[['id', 'name_cinema', 'address', 'telephone'].index(s)])
+            result.sort(key=lambda x: x[['id', 'name_cinema', 'address',
+                                         'telephone'].index(s)])
         # Заполнение таблицы
         self.tableWidget_3.setColumnCount(4)
         self.tableWidget_3.setRowCount(0)
-        self.tableWidget_3.setHorizontalHeaderLabels(['ID', 'Название кинотеатра', 'Адрес', 'Телефон'])
+        self.tableWidget_3.setHorizontalHeaderLabels(['ID',
+                                                      'Название кинотеатра',
+                                                      'Адрес', 'Телефон'])
         self.tableWidget_3.verticalHeader().setVisible(False)
         for i, row in enumerate(result):
             self.tableWidget_3.setRowCount(
@@ -575,8 +625,8 @@ class MyWidget(QMainWindow):
         mdf.exec_()
         data = [max_id + 1] + mdf.get_items()
         if len(data) > 1:
-            db.request("""INSERT INTO cinemas (id, name_cinema, address, telephone)
-                          VALUES(?, ?, ?, ?)""",
+            db.request("""INSERT INTO cinemas (id, name_cinema, address,
+                          telephone) VALUES(?, ?, ?, ?)""",
                        *data)
             db.commit()
             self.update_cinemas()
@@ -594,14 +644,15 @@ class MyWidget(QMainWindow):
             self.statusBar().showMessage('Выбрано более 1 записи')
             return
         # Обновление данных о кинотеатре
-        item_inf = db.request("SELECT * FROM cinemas WHERE id = (" + ", ".join('?' * len(ids)) + ")",
-                              *ids).fetchone()
+        item_inf = db.request("SELECT * FROM cinemas WHERE id = (" +
+                              ", ".join('?' * len(ids)) + ")", *ids).fetchone()
         mdf = AddCinemaDialog(self, item_inf, True)
         mdf.show()
         mdf.exec_()
         data = mdf.get_items()
         if data:
-            db.request("""UPDATE cinemas SET  name_cinema = ?, address = ?, telephone = ? where id LIKE ?""",
+            db.request("""UPDATE cinemas SET  name_cinema = ?, address = ?,
+                          telephone = ? where id LIKE ?""",
                        (*data, item_inf[0]))
             db.commit()
             self.update_cinemas()
@@ -619,10 +670,12 @@ class MyWidget(QMainWindow):
             self.statusBar().showMessage('Выбрано более 1 записи')
             return
         # Запрос на удаление кинотеатра
-        valid = QMessageBox.question(self, '', "Действительно удалить элементы с id " + ",".join(ids),
+        valid = QMessageBox.question(self, '', "Действительно удалить элементы"
+                                               " с id " + ",".join(ids),
                                      QMessageBox.Yes, QMessageBox.No)
         if valid == QMessageBox.Yes:
-            db.request("DELETE FROM cinemas WHERE id IN (" + ", ".join('?' * len(ids)) + ")", *ids)
+            db.request("DELETE FROM cinemas WHERE id IN (" +
+                       ", ".join('?' * len(ids)) + ")", *ids)
             db.commit()
             self.update_cinemas()
 
@@ -639,11 +692,14 @@ class MyWidget(QMainWindow):
         # Сортировка таблицы
         s = self.dict_cinema_halls[self.comboBox_7.currentText()]
         if s:
-            result.sort(key=lambda x: x[['id', 'cinema_id', 'cinema_hall_id', 'number_of_sits'].index(s)])
+            result.sort(key=lambda x: x[['id', 'cinema_id', 'cinema_hall_id',
+                                         'number_of_sits'].index(s)])
         # Заполнение таблицы
         self.tableWidget_4.setColumnCount(4)
         self.tableWidget_4.setRowCount(0)
-        self.tableWidget_4.setHorizontalHeaderLabels(['ID', 'ID кинотеатра', 'ID кинозала', 'Количество мест'])
+        self.tableWidget_4.setHorizontalHeaderLabels(['ID', 'ID кинотеатра',
+                                                      'ID кинозала',
+                                                      'Количество мест'])
         self.tableWidget_4.verticalHeader().setVisible(False)
         for i, row in enumerate(result):
             self.tableWidget_4.setRowCount(
@@ -657,14 +713,15 @@ class MyWidget(QMainWindow):
         """Добавление кинозала"""
         self.statusBar().showMessage('')
         mdf = AddCinemaHallDialog(self, [], False)
-        max_id = db.request("""SELECT MAX(id) from cinema_hall""").fetchone()[0]
+        max_id = db.request("""SELECT MAX(id) from
+                               cinema_hall""").fetchone()[0]
         mdf.show()
         mdf.exec_()
         data = [max_id + 1] + mdf.get_items()
         if len(data) > 1:
-            db.request("""INSERT INTO cinema_hall (id, cinema_id, cinema_hall_id, number_of_sits)
-                          VALUES(?, ?, ?, ?)""",
-                       *data)
+            db.request("""INSERT INTO cinema_hall (id, cinema_id,
+                          cinema_hall_id, number_of_sits) VALUES
+                          (?, ?, ?, ?)""", *data)
             db.commit()
             self.update_cinema_halls()
 
@@ -681,15 +738,15 @@ class MyWidget(QMainWindow):
             self.statusBar().showMessage('Выбрано более 1 записи')
             return
         # Изменение данных о кинозале
-        item_inf = db.request("SELECT * FROM cinema_hall WHERE id IN (" + ", ".join('?' * len(ids)) + ")",
-                              *ids).fetchone()
+        item_inf = db.request("SELECT * FROM cinema_hall WHERE id IN (" +
+                              ", ".join('?' * len(ids)) + ")", *ids).fetchone()
         mdf = AddCinemaHallDialog(self, item_inf, True)
         mdf.show()
         mdf.exec_()
         data = mdf.get_items()
         if data:
-            db.request("""UPDATE cinema_hall SET cinema_id = ?, cinema_hall_id = ?, number_of_sits = ?
-                          where id LIKE ?""",
+            db.request("""UPDATE cinema_hall SET cinema_id = ?, cinema_hall_id
+                          = ?, number_of_sits = ? where id LIKE ?""",
                        *data, item_inf[0])
             db.commit()
             self.update_cinema_halls()
@@ -707,10 +764,12 @@ class MyWidget(QMainWindow):
             self.statusBar().showMessage('Выбрано более 1 записи')
             return
         # Запрос на удаление кинозала
-        valid = QMessageBox.question(self, '', "Действительно удалить элементы с id " + ",".join(ids),
+        valid = QMessageBox.question(self, '', "Действительно удалить элементы"
+                                               " с id " + ",".join(ids),
                                      QMessageBox.Yes, QMessageBox.No)
         if valid == QMessageBox.Yes:
-            db.request("DELETE FROM cinema_hall WHERE id IN (" + ", ".join('?' * len(ids)) + ")", *ids)
+            db.request("DELETE FROM cinema_hall WHERE id IN (" +
+                       ", ".join('?' * len(ids)) + ")", *ids)
             db.commit()
             self.update_cinema_halls()
 
