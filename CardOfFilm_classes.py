@@ -504,8 +504,8 @@ class BuyTct(MyQDialog):
             db.commit()
             for i in range(len(self.numb)):
                 place = self.numb[i] + 1
-                self.ticket = Ticket(self, place)
-                self.ticket.show()
+                ticket = Ticket(self, place)
+                ticket.show()
             # После сохранения всех билетов отключается
             # возможность повторного подтверждения заказа и выбора места
             self.statusBar.setText("Билеты сохранены. Ждем вас на сеансе")

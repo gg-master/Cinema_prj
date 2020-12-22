@@ -192,11 +192,13 @@ class AddSessionDialog(MyQDialog):
                                             where (cinema_id = {cinema_id}
                                             and cinema_hall_id = {hall_id})""").fetchall()))
         i = 0
+
         timetable.sort(key=lambda x: x[0])
         while i < len(timetable) and time_s > timetable[i][0]:
             i += 1
         # Проверка на то, нет ли сеанса в указанное время
-        if not(timetable[i - 1][1] <= time_s and i < len(timetable) and time_e <= timetable[i][0] or i >= len(timetable)
+
+        if not(timetable and timetable[i - 1][1] <= time_s and i < len(timetable) and time_e <= timetable[i][0] or i >= len(timetable)
                or not i):
             self.label_7.setText('Данное время уже занято')
             return
