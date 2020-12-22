@@ -1,4 +1,4 @@
-from project_film.main import MyQWidget, MyQDialog, DataBase, MainWindow
+from project_film.main import MyQWidget, MyQDialog, DataBase
 from project_film.WindowArr_class import WindowArr
 from project_film import QRcode
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -202,7 +202,7 @@ class CardOfFilm(MyQWidget):
         """Узнаем является ли файл локальным или путем является ссылка
         !!! Не реализована проверка валидности файла,
         при условии, что ссылка файла побита"""
-        if name != 'None':
+        if name and name != 'None':
             import requests
             r = requests.head(name)
             # print(r.status_code)
