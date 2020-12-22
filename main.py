@@ -9,7 +9,7 @@ from project_film.WindowArr_class import WindowArr
 
 
 # Settings
-with_wind_load = True
+with_wind_load = False
 base_path_for_none_img = r'system_image\none_img.jpg'
 path_for_system_img = 'system_image\\'
 relative_path_for_media = 'films_image\\'
