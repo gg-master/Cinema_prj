@@ -437,8 +437,8 @@ class BuyTct(MyQDialog):
         rez_c = db.request("""SELECT * from cinemas 
                             where name_cinema like ?""", name_c).fetchall()[0]
 
-        self.adress.setText(rez_c[2])
-        self.phone.setText(rez_c[3])
+        self.adress.setText(str(rez_c[2]))
+        self.phone.setText(str(rez_c[3]))
         self.time_to.setText('---------')
 
         # Загрузка времени
@@ -446,8 +446,11 @@ class BuyTct(MyQDialog):
         rez_time = db.request("""SELECT time_start from timetable 
         where id_film like ? and cinema_id like ?""",
                               self.film_id, id_c).fetchall()
+        self.statusBar.setText('')
+        self.times.setEnabled(True)
         if not rez_time:
             self.statusBar.setText('Данного фильма не найденно')
+            self.times.setEnabled(False)
             return
         rez_s = list(map(lambda x: str(x[0]), rez_time))
         self.times.clear()
