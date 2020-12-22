@@ -9,7 +9,7 @@ from project_film.WindowArr_class import WindowArr
 
 
 # Settings
-with_wind_load = False
+with_wind_load = True
 base_path_for_none_img = r'system_image\none_img.jpg'
 path_for_system_img = 'system_image\\'
 relative_path_for_media = 'films_image\\'
@@ -348,8 +348,8 @@ class MovieSplashScreen(QSplashScreen):
 
 
 if __name__ == "__main__":
-    # import time
-    # time.sleep(3)
+    import time
+    time.sleep(3)
     if not with_wind_load:
             app = QApplication(sys.argv)
             ex = MainWindow()
