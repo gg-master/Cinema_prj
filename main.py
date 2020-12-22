@@ -108,9 +108,13 @@ class MyQDialog(QDialog):
 class MainWindow(QMainWindow, card_widget.Ui_Form):
     """Главное окно"""
     def __init__(self, parent=None):
+        self.window_arr = WindowArr()
+        self.db = DataBase('mydatabase.db')
+
         self.id = 0
         super().__init__(parent)
-        window_arr.append(self)
+
+        self.window_arr.append(self)
         # self.setStyleSheet(open("styles/main_wind.css", "r").read())
         uic.loadUi(path_for_gui + "main_window.ui", self)
 
@@ -147,7 +151,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
         request = f'''SELECT id, title, rating, genre, 
                                         year, poster from films
                                         where title like "{search_text}" {s}'''
-        rez = db.request(request).fetchall()
+        rez = self.db.request(request).fetchall()
         if len(rez) == 0:
             self.statusbar.showMessage('Фильмы не найдены')
         else:
@@ -190,11 +194,11 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
 
     def open_card(self):
         from project_film.CardOfFilm_classes import CardOfFilm
-        self.card = CardOfFilm(self, self.sender().id, window_arr)
+        self.card = CardOfFilm(self, self.sender().id, self.window_arr)
         self.card.show()
 
     def filter_wind_open(self):
-        window_arr.append(self.filt)
+        self.window_arr.append(self.filt)
         self.filt.show()
         self.filt.exec_()
         self.load_films()
@@ -205,7 +209,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
         главного окна в соответствии с установленными фильтрами
         """
         # Запрос в базу
-        rez = db.request("""SELECT DISTINCT year, genre, rating, producer 
+        rez = self.db.request("""SELECT DISTINCT year, genre, rating, producer 
         from films""").fetchall()
         # Форматирование результата запроса
         years = sorted(list(set(map(lambda x: str(x[0]), rez))),
@@ -255,12 +259,12 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
 
     def admin_sign_in(self):
         from project_film.Admin_part import AdminSignIn
-        aw = AdminSignIn(self, window_arr)
+        aw = AdminSignIn(self, self.window_arr)
         aw.show()
         aw.exec_()
 
     def closeEvent(self, a0: QCloseEvent):
-        if window_arr.check_for_main_w(self):
+        if self.window_arr.check_for_main_w(self):
             a0.ignore()
         else:
             super().closeEvent(a0)
@@ -273,7 +277,7 @@ class FilterDialog(MyQDialog):
     """Окно, которое отвечает за работу фильтра"""
     def __init__(self, parent):
         self.parent = parent
-        super().__init__(parent, window_ar=window_arr, modal=True)
+        super().__init__(parent, window_ar=self.window_arr, modal=True)
         uic.loadUi(path_for_gui + 'filter.ui', self)
         self.setStyleSheet(open("styles/filter_style.css", "r").read())
         self.setWindowTitle('Настройки сортировки')
@@ -346,8 +350,6 @@ class MovieSplashScreen(QSplashScreen):
 if __name__ == "__main__":
     # import time
     # time.sleep(3)
-    window_arr = WindowArr()
-    db = DataBase('mydatabase.db')
     if not with_wind_load:
             app = QApplication(sys.argv)
             ex = MainWindow()

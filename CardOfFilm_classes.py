@@ -1,12 +1,11 @@
-from project_film.main import MyQWidget, MyQDialog, DataBase
+from project_film.main import MyQWidget, MyQDialog, DataBase, MainWindow
+from project_film.WindowArr_class import WindowArr
 from project_film import QRcode
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5 import uic
 from PyQt5.Qt import *
 import os
-
-if __name__ == '__main__':
-    exit(print('Its not working now'))
+import sys
 
 db = DataBase('mydatabase.db')
 path_for_gui = 'ui_files\\'
@@ -782,3 +781,10 @@ class Ticket(MyQWidget):
         else:
             a0.ignore()
             self.statusBar.setText('Выберите путь для сохранения')
+
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    ex = CardOfFilm(QMainWindow, 1, WindowArr())
+    ex.show()
+    sys.exit(app.exec())
