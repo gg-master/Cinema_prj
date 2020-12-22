@@ -548,15 +548,35 @@ class MyPushButton(QPushButton):
     def __init__(self, *args):
         super().__init__(*args)
         self.isSelected = False
+        # self.setStyleSheet(
+        #     "background-image: url('system_image/seats_free.jpg');"
+        #     "background-repeat:no-repeat;"
+        #     "background-position:center;"
+        #     "background-color: none;"
+        #     "height: 40px;"
+        #     "width: 35px;")
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            self.setStyleSheet(
-                "background-color: rgb(255, 227, 156);")
+            # self.setStyleSheet(
+            #     "background-image: url('system_image/seats_choose.jpg');"
+            #     "background-repeat:no-repeat;"
+            #     "background-position:center;"
+            #     "background-color: rgb(255, 227, 156);"
+            #     "background-color: none;"
+            #     "height: 40px;"
+            #     "width: 35px;")
+            self.setStyleSheet("background-color: rgb(255, 227, 156);")
             self.isSelected = True
         elif event.button() == Qt.RightButton:
-            self.setStyleSheet(
-                "background-color: none;")
+            # self.setStyleSheet(
+            #     "background-image: url('system_image/seats_free.jpg');"
+            #     "background-repeat:no-repeat;"
+            #     "background-position:center;"
+            #     "background-color: none;"
+            #     "height: 40px;"
+            #     "width: 35px;")
+            self.setStyleSheet("background-color: none;")
             self.isSelected = False
         return QPushButton.mousePressEvent(self, event)
 
@@ -648,8 +668,15 @@ class ChooseSeat(MyQDialog):
             pushButton.setSizePolicy(sizePolicy)
             if int(self.places[i - 1]):
                 pushButton.setEnabled(False)
-                pushButton.setStyleSheet(
-                    "background-color: rgb(172, 163, 181);")
+                # pushButton.setStyleSheet(
+                #     "background-image: url('system_image/seats_ordered.jpg');"
+                #     "background-repeat:no-repeat;"
+                #     "background-position:center;"
+                #     "background-color: rgb(172, 163, 181);"
+                #     "background-color: none;"
+                #     "height: 40px;"
+                #     "width: 35px;")
+                pushButton.setStyleSheet("background-color: rgb(172, 163, 181);")
             horizontalLayout.addWidget(pushButton)
             self.bG.addButton(pushButton)
 
@@ -678,8 +705,15 @@ class ChooseSeat(MyQDialog):
         for num in num_of_choose_btn:
             btn = btn_arr[num]
             btn.isSelected = True
-            btn.setStyleSheet(
-                "background-color: rgb(255, 227, 156);")
+            # btn.setStyleSheet(
+            #     "background-image: url('system_image/seats_choose.jpg');"
+            #     "background-repeat:no-repeat;"
+            #     "background-position:center;"
+            #     "background-color: rgb(255, 227, 156);"
+            #     "background-color: none;"
+            #     "height: 40px;"
+            #     "width: 35px;")
+            btn.setStyleSheet("background-color: rgb(255, 227, 156);")
             btns.append(num)
         self.last_num_of_choose_btn = btns
 
