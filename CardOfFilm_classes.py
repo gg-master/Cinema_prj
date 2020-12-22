@@ -615,10 +615,10 @@ class ChooseSeat(MyQDialog):
 
         Реализовал через преобразование pyuic так как сначала прикинул нужный
         мне дизайн и потом отформатировал под свои задачи"""
-        self.resize(599, 215)
+        self.resize(600, 215)
         self.setWindowTitle('Выбор места')
-        self.setMinimumSize(QtCore.QSize(618, 216))
-        self.setMaximumSize(QtCore.QSize(1126, 509))
+        self.setMinimumSize(QtCore.QSize(300, 216))
+        # self.setMaximumSize(QtCore.QSize(1126, 509))
         # self.setGeometry(300, 300, 300, 300)
         gridLayout = QtWidgets.QGridLayout(self)
         verticalLayout = QtWidgets.QVBoxLayout()
@@ -631,27 +631,28 @@ class ChooseSeat(MyQDialog):
         label.setStyleSheet("background-color: rgb(152, 152, 152);")
         label.setAlignment(QtCore.Qt.AlignCenter)
         label.setText('Экран')
+        label.setMaximumHeight(16)
         verticalLayout.addWidget(label)
         spacerItem = QtWidgets.QSpacerItem(20, 20,
                                            QtWidgets.QSizePolicy.Minimum,
-                                           QtWidgets.QSizePolicy.Fixed)
+                                           QtWidgets.QSizePolicy.Expanding)
         verticalLayout.addItem(spacerItem)
 
-        scrollArea = QtWidgets.QScrollArea(self)
-        scrollArea.setFrameShape(QtWidgets.QFrame.NoFrame)
-        scrollArea.setFrameShadow(QtWidgets.QFrame.Plain)
-        scrollArea.setWidgetResizable(True)
-        # scrollArea.setAlignment(
-        #     QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft |
-        #     QtCore.Qt.AlignVCenter)
-        scrollArea.setAlignment(QtCore.Qt.AlignCenter)
-        scrollAreaWidgetContents = QtWidgets.QWidget()
-        scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 598, 141))
-
-        verticalLayout_3 = QtWidgets.QVBoxLayout(scrollAreaWidgetContents)
-        verticalLayout_3.setContentsMargins(0, 0, 0, 0)
-        verticalLayout_3.setSpacing(1)
-        # verticalLayout_3 = QtWidgets.QVBoxLayout()
+        # scrollArea = QtWidgets.QScrollArea(self)
+        # scrollArea.setFrameShape(QtWidgets.QFrame.NoFrame)
+        # scrollArea.setFrameShadow(QtWidgets.QFrame.Plain)
+        # scrollArea.setWidgetResizable(True)
+        # # scrollArea.setAlignment(
+        # #     QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft |
+        # #     QtCore.Qt.AlignVCenter)
+        # scrollArea.setAlignment(QtCore.Qt.AlignCenter)
+        # scrollAreaWidgetContents = QtWidgets.QWidget()
+        # scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 598, 141))
+        #
+        # verticalLayout_3 = QtWidgets.QVBoxLayout(scrollAreaWidgetContents)
+        # verticalLayout_3.setContentsMargins(0, 0, 0, 0)
+        # verticalLayout_3.setSpacing(1)
+        verticalLayout_3 = QtWidgets.QVBoxLayout()
 
         self.bG = QButtonGroup()
         k = 3
@@ -681,13 +682,15 @@ class ChooseSeat(MyQDialog):
                 horizontalLayout.addItem(spacerItem)
 
             pushButton = MyPushButton(str(i), self)
-            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum,
+            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed,
                                                QtWidgets.QSizePolicy.Fixed)
             sizePolicy.setHorizontalStretch(0)
             sizePolicy.setVerticalStretch(0)
             sizePolicy.setHeightForWidth(
                 pushButton.sizePolicy().hasHeightForWidth())
             pushButton.setSizePolicy(sizePolicy)
+            pushButton.setMaximumSize(QtCore.QSize(30, 30))
+            pushButton.setMinimumSize(QtCore.QSize(30, 30))
             if int(self.places[i - 1]):
                 pushButton.setEnabled(False)
                 # pushButton.setStyleSheet(
@@ -708,8 +711,8 @@ class ChooseSeat(MyQDialog):
         horizontalLayout.addItem(spacerItem)
         verticalLayout_3.addLayout(horizontalLayout)
 
-        scrollArea.setWidget(scrollAreaWidgetContents)
-        verticalLayout.addWidget(scrollArea)
+        # scrollArea.setWidget(scrollAreaWidgetContents)
+        # verticalLayout.addWidget(scrollArea)
 
         self.buttonBox = QtWidgets.QDialogButtonBox(self)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)

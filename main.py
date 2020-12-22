@@ -348,8 +348,8 @@ class MovieSplashScreen(QSplashScreen):
 
 
 if __name__ == "__main__":
-    import time
-    time.sleep(3)
+    # import time
+    # time.sleep(3)
     if not with_wind_load:
             app = QApplication(sys.argv)
             ex = MainWindow()
