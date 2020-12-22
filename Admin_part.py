@@ -217,8 +217,7 @@ class AddSessionDialog(MyQDialog):
             self.label_7.setText('Неправильный формат ввода цены')
             return
         places = ', '.join(['0'] * db.request(f"""SELECT number_of_sits from
-                                                  cinema_hall where (cinema_id
-                                                  = {cinema_id} and cinema_hall_id = {hall_id})"""
+                                                  cinema_hall where (cinema_id= {cinema_id} and cinema_hall_id = {hall_id})"""
                                               ).fetchone()[0])
         self.arr = [cinema_id, hall_id, film_id, time_s, time_e, places, price]
         self.close()
