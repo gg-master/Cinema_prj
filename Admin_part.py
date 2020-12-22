@@ -187,13 +187,6 @@ class AddSessionDialog(MyQDialog):
         timetable.sort(key=lambda x: x[0])
         while i < len(timetable) and time_s > timetable[i][0]:
             i += 1
-        a = ''
-        if timetable[i - 1][1] <= time_s:
-            a = '1'
-        if i < len(timetable):
-            a += '2'
-        if time_e <= timetable[i][0]:
-            a += '3'
         if not(timetable[i - 1][1] <= time_s and i < len(timetable) and time_e <= timetable[i][0] or i >= len(timetable)
                or not i):
             self.label_7.setText('Данное время уже занято')
