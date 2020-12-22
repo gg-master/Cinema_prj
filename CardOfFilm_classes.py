@@ -278,6 +278,7 @@ class BuyTct(MyQDialog):
         self.film_title = title
         self.path_for_tct = None
         self.isAccepted = False
+        self.currency = 'руб'
 
         self.load_cinemas()
 
@@ -319,7 +320,8 @@ class BuyTct(MyQDialog):
                 self.accept.setEnabled(True)
                 self.statusBar.setText('')
                 self.it_price.setText(
-                    f'{int(self.price.text().split()[0]) * len(self.numb)}')
+                    f'{int(self.price.text().split()[0]) * len(self.numb)} '
+                    f'{self.currency}')
             else:
                 # Если места оказались не выбранными,
                 # то блокируем кнопку подтвержения и
@@ -422,7 +424,7 @@ class BuyTct(MyQDialog):
                 and time_start  like ?""",
                            self.film_id, id_c, self.time_s).fetchall()[0]
         self.time_to.setText(rez_f[0])
-        self.price.setText(str(rez_f[2]))
+        self.price.setText(f"{rez_f[2]} {self.currency}")
         self.places = rez_f[1].split(', ')
         self.id_films_in_c = rez_f[-2]
         self.cinema_hall_id = rez_f[-1]
