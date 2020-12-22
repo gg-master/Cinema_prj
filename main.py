@@ -234,7 +234,7 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
                 name = name.strip('\n')
                 producer.append(name)
         producer = sorted(set(producer))
-        self.filt = FilterDialog(self)
+        self.filt = FilterDialog(self, self.window_arr)
         self.filt.reload_ui(years, genre, rating, producer)
 
     def create_request_for_filter(self):
@@ -275,9 +275,9 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
 
 class FilterDialog(MyQDialog):
     """Окно, которое отвечает за работу фильтра"""
-    def __init__(self, parent):
+    def __init__(self, parent, window_arr):
         self.parent = parent
-        super().__init__(parent, window_ar=self.window_arr, modal=True)
+        super().__init__(parent, window_ar=window_arr, modal=True)
         uic.loadUi(path_for_gui + 'filter.ui', self)
         self.setStyleSheet(open("styles/filter_style.css", "r").read())
         self.setWindowTitle('Настройки сортировки')
