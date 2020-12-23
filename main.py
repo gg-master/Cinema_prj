@@ -284,8 +284,8 @@ class FilterDialog(MyQDialog):
         self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
         self.buttonBox.accepted.connect(self.accept_data)
         self.buttonBox.rejected.connect(self.close)
-        self.buttonBox.button(QDialogButtonBox.Ok).setText("Подтвердить")
-        self.buttonBox.button(QDialogButtonBox.Ok).setText("Подтвердить")
+        self.buttonBox.button(QDialogButtonBox.Ok).setText("Ок")
+        self.buttonBox.button(QDialogButtonBox.Cancel).setText("Отменить")
 
         self.a = {'year': [False, ''],
                   'genre': [False, ''],

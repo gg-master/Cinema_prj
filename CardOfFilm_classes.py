@@ -539,9 +539,17 @@ class TrailerWidget(MyQWidget):
         # print(self.url)
         self.setWindowTitle(title)
 
+        # self.player = QMediaPlayer()
+        #
+        # playlist = QMediaPlaylist(self.player)
+        # playlist.addMedia(QMediaContent(QUrl.fromLocalFile(self.url)))
+
         self.player = QMediaPlayer(None, QMediaPlayer.VideoSurface)
         self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.url)))
         self.player.setVideoOutput(self.ui.widget)
+        # videoWidget = QVideoWidget()
+        # self.player.setVideoOutput(videoWidget)
+        # videoWidget.show()
         self.player.play()
         self.play_btn.clicked.connect(self.player.play)
         self.pause_btn.clicked.connect(self.player.pause)
