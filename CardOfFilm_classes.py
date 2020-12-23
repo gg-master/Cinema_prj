@@ -1,6 +1,6 @@
-from main import MyQWidget, MyQDialog, DataBase
+from project_film.main import MyQWidget, MyQDialog, DataBase
 from WindowArr_class import WindowArr
-import QRcode
+from project_film import QRcode
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5 import uic
 from PyQt5.Qt import *
@@ -12,6 +12,7 @@ path_for_gui = 'ui_files\\'
 base_path_for_none_img = r'system_image\none_img.jpg'
 path_for_system_img = 'system_image\\'
 relative_path_for_media = 'films_image\\'
+relative_path_for_media_video = 'trailers\\'
 splitter_in_db = ' '
 tickets_numb = int(open('tickets_numb.txt', 'r').read())
 
@@ -203,13 +204,19 @@ class CardOfFilm(MyQWidget):
         !!! Не реализована проверка валидности файла,
         при условии, что ссылка файла побита"""
         if name and name != 'None':
-            import requests
-            r = requests.head(name)
-            # print(r.status_code)
-            if name.startswith('http') and 200 <= r.status_code < 400:
-                return name
-            elif os.path.isfile(relative_path_for_media + name):
-                return relative_path_for_media + name
+            poster = name.split(splitter_in_db)
+            for vid in range(len(poster)):
+                if poster[vid] and not poster[vid].startswith('http'):
+                    poster[vid] = \
+                        f'{relative_path_for_media_video}{poster[vid]}'
+            for path_p in poster:
+                if os.path.isfile(path_p):
+                    return path_p
+                elif path_p.startswith('http'):
+                    import requests
+                    r = requests.head(name)
+                    if 200 <= r.status_code < 400:
+                        return path_p
         return None
 
     def play_trailer(self):
