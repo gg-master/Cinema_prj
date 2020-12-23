@@ -5,7 +5,7 @@ from project_film import card_widget
 from PyQt5 import uic
 from PyQt5.Qt import *
 import time
-from project_film.WindowArr_class import WindowArr
+from WindowArr_class import WindowArr
 
 
 # Settings
@@ -284,6 +284,9 @@ class FilterDialog(MyQDialog):
         self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
         self.buttonBox.accepted.connect(self.accept_data)
         self.buttonBox.rejected.connect(self.close)
+        self.buttonBox.button(QDialogButtonBox.Ok).setText("Подтвердить")
+        self.buttonBox.button(QDialogButtonBox.Ok).setText("Подтвердить")
+
         self.a = {'year': [False, ''],
                   'genre': [False, ''],
                   'rating': [False, ''],
