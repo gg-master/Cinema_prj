@@ -1,7 +1,7 @@
 from PyQt5 import uic
 from PyQt5.Qt import *
-from project_film.main import MyQDialog, DataBase
-from project_film.WindowArr_class import WindowArr
+from main import MyQDialog, DataBase
+from WindowArr_class import WindowArr
 import sys
 from PyQt5.QtWidgets import QApplication, QMessageBox
 from PyQt5.QtWidgets import QMainWindow, QTableWidgetItem

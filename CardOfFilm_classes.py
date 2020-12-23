@@ -1,6 +1,6 @@
-from project_film.main import MyQWidget, MyQDialog, DataBase
-from project_film.WindowArr_class import WindowArr
-from project_film import QRcode
+from main import MyQWidget, MyQDialog, DataBase
+from WindowArr_class import WindowArr
+import QRcode
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5 import uic
 from PyQt5.Qt import *
