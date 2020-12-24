@@ -630,9 +630,9 @@ class ChooseSeat(MyQDialog):
 
         Реализовал через преобразование pyuic так как сначала прикинул нужный
         мне дизайн и потом отформатировал под свои задачи"""
-        self.resize(600, 215)
+        self.resize(300, 215)
         self.setWindowTitle('Выбор места')
-        self.setMinimumSize(QtCore.QSize(300, 216))
+        # self.setMinimumSize(QtCore.QSize(300, 216))
         # self.setMaximumSize(QtCore.QSize(1126, 509))
         # self.setGeometry(300, 300, 300, 300)
         gridLayout = QtWidgets.QGridLayout(self)
