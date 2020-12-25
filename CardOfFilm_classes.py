@@ -1,6 +1,7 @@
 from main import MyQWidget, MyQDialog, DataBase
 from WindowArr_class import WindowArr
 import QRcode
+import load_url_img
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5 import uic
 from PyQt5.Qt import *

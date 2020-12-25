@@ -240,9 +240,9 @@ class AddCinemaDialog(MyQDialog):
         self.pushButton.clicked.connect(self.check_data)
         self.arr = []
         if changed:
-            self.lineEdit.setText(array[1])
-            self.lineEdit_2.setText(array[2])
-            self.lineEdit_3.setText(array[3])
+            self.lineEdit.setText(str(array[1]))
+            self.lineEdit_2.setText(str(array[2]))
+            self.lineEdit_3.setText(str(array[3]))
             self.setWindowTitle('Изменить кинотеатр')
             self.pushButton.setText('Сохранить')
         else:
