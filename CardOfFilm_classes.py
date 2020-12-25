@@ -710,14 +710,16 @@ class ChooseSeat(MyQDialog):
             if int(self.places[i - 1]):
                 pushButton.setEnabled(False)
                 # pushButton.setStyleSheet(
-                #     "background-image: url('system_image/seats_ordered.jpg');"
+                #     "background-image: url('system_image/seats_
+                #     ordered.jpg');"
                 #     "background-repeat:no-repeat;"
                 #     "background-position:center;"
                 #     "background-color: rgb(172, 163, 181);"
                 #     "background-color: none;"
                 #     "height: 40px;"
                 #     "width: 35px;")
-                pushButton.setStyleSheet("background-color: rgb(172, 163, 181);")
+                pushButton.setStyleSheet("background-color: "
+                                         "rgb(172, 163, 181);")
             horizontalLayout.addWidget(pushButton)
             self.bG.addButton(pushButton)
 
