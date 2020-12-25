@@ -619,8 +619,6 @@ class ChooseSeat(MyQDialog):
         self.buttonBox.rejected.connect(self.set_default_places)
         self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
         # self.setWindowFlag(Qt.WindowCloseButtonHint, False)
-        self.setToolTip("left-click  -  book"
-                        "\nright-click  -  cancel your reservation")
 
     def setupUi(self):
         """Происходит загрузка интерфейса посредством циклического
@@ -698,6 +696,8 @@ class ChooseSeat(MyQDialog):
                 horizontalLayout.addItem(spacerItem)
 
             pushButton = MyPushButton(str(i), self)
+            pushButton.setToolTip("left-click  -  book"
+                                  "\nright-click  -  cancel your reservation")
             sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed,
                                                QtWidgets.QSizePolicy.Fixed)
             sizePolicy.setHorizontalStretch(0)
