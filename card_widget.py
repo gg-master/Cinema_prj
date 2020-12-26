@@ -111,12 +111,6 @@ class Ui_Form(object):
         self.btn = BtnWid(self.widget, film_id=id)
         self.btn.setMinimumWidth(189)
         self.btn.setMinimumHeight(35)
-        # self.btn.setStyleSheet("background-color: rgb(116, 125, 255);\n"
-        #                        "border-width:1px;\n"
-        #                        "border-radius: 10px;\n"
-        #                        "border-color: black;\n"
-        #                        "color: rgb(255, 255, 255);\n"
-        #                        "")
 
         self.verticalLayout.addWidget(self.btn)
 
@@ -142,8 +136,8 @@ class Ui_Form(object):
         win_w, win_h = 250, 400
         # Загрузка фото
         w_l, h_l = self.image_label.width(), self.image_label.height()
-        self.image_label.setPixmap(pixmap.scaled(w_l + (win_w // 2.5),
-                                                 h_l + (win_h // 2.5),
+        self.image_label.setPixmap(pixmap.scaled(int(w_l + (win_w // 2.5)),
+                                                 int(h_l + (win_h // 2.5)),
                                                  Qt.KeepAspectRatio))
 
         self.title.setText(_translate("Form", title))

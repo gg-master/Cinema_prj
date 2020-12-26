@@ -115,8 +115,8 @@ class MainWindow(QMainWindow, card_widget.Ui_Form):
         super().__init__(parent)
 
         self.window_arr.append(self)
-        # self.setStyleSheet(open("styles/main_wind.css", "r").read())
         uic.loadUi(path_for_gui + "main_window.ui", self)
+        self.setStyleSheet(open("styles/main_wind.css", "r").read())
 
         # Установка минимальных размеров окна
         self.setMinimumWidth(wdw + 30 * (col_in_mainWindow + 1))
@@ -317,7 +317,6 @@ class FilterDialog(MyQDialog):
             self.a['producer'] = [True, self.comboBox_4.currentText()]
         else:
             self.a['producer'] = [False, '']
-        # print(self.a)
         self.close()
 
     def get_items(self):
@@ -372,20 +371,3 @@ if __name__ == "__main__":
         window.show()
         splash.finish(window)
         sys.exit(app.exec_())
-
-
-"""Экран загрузки с использование статичной картинки"""
-# if __name__ == '__main__':
-#     import time
-#     app = QApplication(sys.argv)
-#     pixmap = QPixmap(path_for_system_img + 'log.jpg')
-#     splash = QSplashScreen(pixmap)
-#     splash.show()
-#     for n in ("HW presence", "net connectivity", "API connectivity"):
-#         splash.showMessage("Check for {0}".format(n))
-#         time.sleep(1)
-#         app.processEvents()
-#     mainWin = MainWindow()
-#     splash.finish(mainWin)
-#     mainWin.show()
-#     sys.exit(app.exec_())

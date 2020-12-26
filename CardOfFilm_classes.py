@@ -250,11 +250,12 @@ class MyPopup(QWidget):
         if p_h > p_w:
             h = max_h
             w = p_w * k_h
-        elif p_h < p_w:
+        else:
+            # p_h < p_w
             h = p_h * k_w
             w = max_w
-        self.resize(w, h)
-        self.label.resize(w, h)
+        self.resize(int(w), int(h))
+        self.label.resize(int(w), int(h))
         self.move(parent.x() + parent.width() // 2 - self.label.width() // 2,
                   parent.y() + parent.height() // 2 - self.label.height() //
                   2 + 30)
